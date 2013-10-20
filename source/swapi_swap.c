@@ -110,3 +110,40 @@ int swapi_swap_post(swapi_swap_t *ss, swapi_message_t *msg){
 
 	return swapi_queue_post(ss->ss_queue, msg);
 }
+
+int swapi_swap_push_view(swapi_swap_t *swap, swapi_view_t *view){
+	ASSERT(swap != NULL);
+	ASSERT(view != NULL);
+
+	list_add(&view->sv_node, &swap->ss_views);
+
+	swap->ss_vwcur = view;
+
+	return 0;
+}
+
+int swapi_swap_pop_view(swapi_swap_t *swap, swapi_view_t **view){
+	swapi_view_t	*v;
+
+	ASSERT(swap != NULL);
+	ASSERT(view != NULL);
+
+	v = list_first_entry(&swap->ss_views, swapi_view_t, sv_node);
+	if(swap->ss_view != v){
+		return -EINVAL;
+	}
+
+	if(list_is_last(&v->sv_node, &swap->ss_views)){
+		return -EINVAL;
+	}
+
+	list_del_init(&v->sv_node);
+	*view = v;
+
+	v = list_first_entry(&swap->ss_views, swapi_view_t, sv_node);
+	ASSERT(v != NULL);
+	swap->ss_vwcur = v;
+
+	return 0;
+}
+
