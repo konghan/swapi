@@ -129,7 +129,7 @@ int swapi_swap_pop_view(swapi_swap_t *swap, swapi_view_t **view){
 	ASSERT(view != NULL);
 
 	v = list_first_entry(&swap->ss_views, swapi_view_t, sv_node);
-	if(swap->ss_view != v){
+	if(swap->ss_vwcur != v){
 		return -EINVAL;
 	}
 
@@ -145,5 +145,17 @@ int swapi_swap_pop_view(swapi_swap_t *swap, swapi_view_t **view){
 	swap->ss_vwcur = v;
 
 	return 0;
+}
+
+swapi_view_t *swapi_swap_topview(swapi_swap_t *swap){
+	ASSERT(swap != NULL);
+
+	return swap->ss_vwcur;
+}
+
+int swapi_swap_add_handler(swapi_swap_t *swap, int type, swapi_handler_entry_t *she){
+	ASSERT((swap != NULL) && (she != NULL));
+
+	return swapi_handler_add(swap->ss_handler, type, she);
 }
 

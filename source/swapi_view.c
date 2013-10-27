@@ -11,18 +11,6 @@
 #include "swapi_sys_cache.h"
 
 
-struct swapi_view{
-	cairo_t				*sv_cairo;
-	cairo_surface_t		*sv_surface;
-	
-	int					sv_width;
-	int					sv_height;
-
-	struct list_head	sv_node;
-
-	swapi_hanlder_t		*sv_handlers;
-};
-
 cairo_t *swapi_view_get_cairo(swapi_view_t *sv){
 	return sv->sv_cairo;
 }
@@ -39,10 +27,17 @@ int swapi_view_get_height(swapi_view_t *sv){
 	return sv->sv_height;
 }
 
+int swapi_view_is_fullscreen(swapi_view_t *sv){
+	return sv->sv_type == kSWAPI_VIEW_FULLSCREEN;
+}
+
 swapi_handler_t *swapi_view_get_handlers(swapi_view_t *sv){
 	return sv->sv_handlers;
 }
 
+int swapi_view_add_handler(swapi_view_t *sv, int type, swapi_handler_entry_t *she){
+	return swapi_handler_add(sv->sv_handlers, type, she);
+}
 
 int swapi_view_create(int fullscreen, swapi_view_t **sv){
 	swapi_view_t			*v;
@@ -95,6 +90,7 @@ int swapi_view_create(int fullscreen, swapi_view_t **sv){
 		goto exit_handler;
 	}
 
+	v->sv_type = fullscreen;
 	*sv = v;
 
 	return 0;

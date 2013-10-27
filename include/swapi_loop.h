@@ -24,6 +24,8 @@ int swapi_loop_load_swap(const char *swap);
 
 int swapi_loop_post(swapi_message_t *msg);
 
+swapi_swap_t* swapi_loop_topswap();
+
 int swapi_loop_module_init();
 int swapi_loop_module_fini();
 

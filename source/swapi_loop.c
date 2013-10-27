@@ -25,6 +25,12 @@ typedef struct swapi_loop{
 
 	struct list_head	sl_swaps;
 
+	swapi_swap_t		*sl_clock;	// default clock
+	swapi_swap_t		*sl_launch;	// swap launch
+	swapi_swap_t		*sl_shell;	// shell bar, not in sl_swaps
+	swapi_swap_t		*sl_vmsgr;	// voice messager app
+	swapi_swap_t		*sl_srvs;	// services:gps ..., not in sl_swaps
+
 	swapi_handler_t		*sl_handler;
 	swapi_queue_t		*sl_queue;
 }swapi_loop_t;
@@ -170,6 +176,7 @@ static int swapi_loop_init(){
 	sls = get_swaps();
 	while(sls->swap_init != swap_default){
 		sls->swap_init();
+		sls++;
 	}
 
 //	sl->sl_cur = list_first_entry(&sl->sl_swaps, swapi_swap_t, ss_node);
@@ -181,7 +188,11 @@ static int swapi_loop_init(){
 
 
 static int swapi_loop_setcur(swapi_loop_t *sl, swapi_swap_t *swap){
+	
 	// post on_resume message to swap
+	
+	sl->sl_cur = swap;
+
 	return -1;
 }
 
@@ -250,3 +261,10 @@ int swapi_loop_run(void *p){
 
 	return 0;
 }
+
+swapi_swap_t* swapi_loop_topswap(){
+	swapi_loop_t	*sl = get_loop();
+
+	return sl->sl_cur;
+}
+

@@ -11,12 +11,10 @@
 
 
 #include "swapi_sys_logger.h"
+#include "native_logger.h"
 
 typedef struct swapi_logger{
     int		    log_init;
-    SOCKET		log_sock;
-
-    struct sockaddr_in log_serv;
 }swapi_logger_t;
 
 struct swapi_logger_ltos {
@@ -45,9 +43,9 @@ static char *log_ltos(int level){
 
 int swapi_logger_print(int level, char *fmt, ...){
     swapi_logger_t	*log = &__log_data;
-    char	buf[SWAPI_LOGGER_MAX_BUF];
-    int		size = 0;
-    va_list	args;
+    char			buf[SWAPI_LOGGER_MAX_BUF];
+    int				size = 0;
+    va_list			args;
 
     if(!log->log_init){
 		return -1;
@@ -59,26 +57,11 @@ int swapi_logger_print(int level, char *fmt, ...){
     size += _vsnprintf(buf+size, SWAPI_LOGGER_MAX_BUF-size, fmt, args);
     va_end(args);
 
-    return send(log->log_sock, buf, size, 0);
+	return native_logger_output(buf, size);
 }
 
 int swapi_log_module_init(){
     swapi_logger_t	*log = &__log_data;
-
-    log->log_sock = socket(PF_INET, SOCK_STREAM, 0);
-		if(log->log_sock < 0){
-		return -1;
-    }
-
-    log->log_serv.sin_family = AF_INET;
-    log->log_serv.sin_addr.s_addr = inet_addr("127.0.0.1");
-    log->log_serv.sin_port = htons(4040);
-
-    if(connect(log->log_sock, (struct sockaddr *)&log->log_serv,
-		sizeof(struct sockaddr_in)) < 0){
-		closesocket(log->log_sock);
-		return -1;
-    }
 
     log->log_init = 1;
 
@@ -88,10 +71,7 @@ int swapi_log_module_init(){
 int swapi_log_module_fini(){
     swapi_logger_t	*log = &__log_data;
 
-    if(log->log_init){
-		log->log_init = 0;
-		closesocket(log->log_sock);
-    }
+	log->log_init = 0;
 
     return 0;
 }
