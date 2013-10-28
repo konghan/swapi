@@ -5,6 +5,12 @@
 
 #include "swapi_render.h"
 
+#include "swapi_shell.h"
+#include "swapi_view.h"
+#include "swapi_swap.h"
+#include "swapi_loop.h"
+
+#include "swapi_sys_logger.h"
 #include "swapi_sys_thread.h"
 
 #include "native_graphic.h"
@@ -29,7 +35,7 @@ static swapi_render_t *get_render(){
 	return &__gs_sr;
 }
 
-int swapi_render_init(){
+int swapi_render_module_init(){
 	swapi_render_t			*sr;
 	native_graphic_info_t	info;
 
@@ -58,7 +64,7 @@ int swapi_render_init(){
 	return 0;
 }
 
-int swapi_render_fini(){
+int swapi_render_module_fini(){
 	swapi_render_t *sr = get_render();
 	
 	if(sr->sr_init){
@@ -71,7 +77,7 @@ int swapi_render_fini(){
 	return 0;
 }
 
-int swapi_render_flush(){
+int swapi_render_flush(int type){
 	swapi_render_t		*sr = get_render();
 	swapi_swap_t		*swap;
 	swapi_view_t		*view;
@@ -102,11 +108,17 @@ int swapi_render_flush(){
 	}
 
 	if(swapi_view_is_fullscreen(view)){
-		native_graphic_draw(swapi_view_get_surface(view), 0, 0, sr->sr_width, sr->sr_height);
+		
+		if(type & kSWAPI_RENDER_SWAP_UPDATE)
+			native_graphic_draw(swapi_view_get_surface(view), 0, 0,
+					sr->sr_width, sr->sr_height);
 	}else{
-		native_graphic_draw(surface, 0, 0, sr->sr_width, kSWAPI_SHELL_HEIGHT);
-		native_graphic_draw(swapi_view_get_surface(view), 0, kSWAPI_SHELL_HEIGHT,
-				sr->sr_width, sr->sr_height - kSWAPI_SHELL_HEIGHT);
+		if(type & kSWAPI_RENDER_SHELL_UPDATE)		
+			native_graphic_draw(surface, 0, 0, sr->sr_width, kSWAPI_SHELL_HEIGHT);
+		
+		if(type & kSWAPI_RENDER_SWAP_UPDATE)
+			native_graphic_draw(swapi_view_get_surface(view), 0, kSWAPI_SHELL_HEIGHT,
+					sr->sr_width, sr->sr_height - kSWAPI_SHELL_HEIGHT);
 	}
 
 	native_flush_device();

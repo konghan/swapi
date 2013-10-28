@@ -70,6 +70,9 @@ int swapi_swap_pop_view(swapi_swap_t *swap, swapi_view_t **view);
 
 swapi_view_t *swapi_swap_topview(swapi_swap_t *swap);
 
+int swapi_swap_module_init();
+int swapi_swap_module_fini();
+
 #ifdef __cplusplus
 }
 #endif

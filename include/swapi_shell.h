@@ -6,6 +6,9 @@
 #ifndef __SWAPI_SHELL_H__
 #define __SWAPI_SHELL_H__
 
+#include "swapi_message.h"
+
+#include <cairo/cairo.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,8 +16,8 @@ extern "C" {
 
 #define kSWAPI_SHELL_HEIGHT		10
 
-int swapi_shell_init();
-int swapi_shell_fini();
+int swapi_shell_module_init();
+int swapi_shell_module_fini();
 
 int swapi_shell_post(swapi_message_t *msg);
 

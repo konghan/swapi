@@ -134,3 +134,11 @@ int swapi_queue_wait(swapi_queue_t *sq, void *msg){
 	return 0;
 }
 
+int swapi_queue_module_init(){
+	return 0;
+}
+
+int swapi_queue_module_fini(){
+	return 0;
+}
+

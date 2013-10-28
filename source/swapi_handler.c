@@ -110,3 +110,12 @@ int swapi_handler_invoke(swapi_handler_t *sh, swapi_message_t *msg){
 
 	return 0;
 }
+
+int swapi_handler_module_init(){
+	return 0;
+}
+
+int swapi_handler_module_fini(){
+	return 0;
+}
+

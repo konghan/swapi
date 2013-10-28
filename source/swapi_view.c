@@ -4,19 +4,22 @@
  */
 
 #include "swapi_view.h"
-
 #include "swapi_handler.h"
+#include "swapi_shell.h"
 
 #include "swapi_sys_logger.h"
 #include "swapi_sys_cache.h"
 
+#include "native_graphic.h"
+
+#include <cairo/cairo.h>
 
 cairo_t *swapi_view_get_cairo(swapi_view_t *sv){
 	return sv->sv_cairo;
 }
 
 cairo_surface_t *swapi_view_get_surface(swapi_view_t *sv){
-	return cv->sv_surface;
+	return sv->sv_surface;
 }
 
 int swapi_view_get_width(swapi_view_t *sv){
@@ -85,7 +88,7 @@ int swapi_view_create(int fullscreen, swapi_view_t **sv){
 	v->sv_height = h;
 	INIT_LIST_HEAD(&v->sv_node);
 
-	if(swapi_handler_create(kSWAPI_HANDLER_DEFAULT, &v->sv_handlers) != 0){
+	if(swapi_handler_create(kSWAPI_HANDLER_DEFAULT_SLOTS, &v->sv_handlers) != 0){
 		swapi_log_warn("create handler fail!\n");
 		goto exit_handler;
 	}
@@ -114,11 +117,19 @@ int swapi_view_destroy(swapi_view_t *sv){
 	list_del(&sv->sv_node);
 	swapi_handler_destroy(sv->sv_handlers);
 
-	cairo_destroy(v->sv_cairo);
-	cairo_surface_destroy(v->sv_surface);
+	cairo_destroy(sv->sv_cairo);
+	cairo_surface_destroy(sv->sv_surface);
 	
-	swapi_heap_free(v);
+	swapi_heap_free(sv);
 
+	return 0;
+}
+
+int swapi_view_module_init(){
+	return 0;
+}
+
+int swapi_view_module_fini(){
 	return 0;
 }
 

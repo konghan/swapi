@@ -11,16 +11,17 @@ extern "C" {
 #endif
 	
 enum {
-	SWAPI_MSGTYPE_KEYBOARD = 0,
-	SWAPI_MSGTYPE_TIMER,
-	SWAPI_MSGTYPE_GSENSOR,
-	SWAPI_MSGTYPE_GPS,
-	SWAPI_MSGTYPE_PHONE_CALL,
-	SWAPI_MSGTYPE_PHONE_MSG,
+	kSWAPI_MSGTYPE_DEFAULT  = 0,
+	kSWAPI_MSGTYPE_KEYBOARD,
+	kSWAPI_MSGTYPE_TIMER,
+	kSWAPI_MSGTYPE_GSENSOR,
+	kSWAPI_MSGTYPE_GPS,
+	kSWAPI_MSGTYPE_PHONE_CALL,
+	kSWAPI_MSGTYPE_PHONE_MSG,
 
-	SWAPI_MSGTYPE_APP_DATA,
-	SWAPI_MSGTYPE_APP_PRIVATE,
-	SWAPI_MSGTYPE_END,
+	kSWAPI_MSGTYPE_APP_DATA,
+	kSWAPI_MSGTYPE_APP_PRIVATE,
+	kSWAPI_MSGTYPE_END,
 };
 
 typedef struct swapi_message{
@@ -30,7 +31,7 @@ typedef struct swapi_message{
 	union {
 		void			*sm_ptr;
 		unsigned long	sm_data;
-	}mq_u;
+	};
 }swapi_message_t;
 
 int swapi_message_module_init();

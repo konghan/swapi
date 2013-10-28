@@ -159,3 +159,11 @@ int swapi_swap_add_handler(swapi_swap_t *swap, int type, swapi_handler_entry_t *
 	return swapi_handler_add(swap->ss_handler, type, she);
 }
 
+int swapi_swap_module_init(){
+	return 0;
+}
+
+int swapi_swap_module_fini(){
+	return 0;
+}
+

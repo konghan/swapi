@@ -38,18 +38,10 @@ typedef struct swapi_loop{
 /*
  * main data
  */
-static swapi_loop_t		__gs_data; // = {};
+static swapi_loop_t		__gs_data = {};
 static inline swapi_loop_t *get_loop(){
 	return &__gs_data;
 }
-
-/*
- * default message processor
- */
-typedef struct swapi_loop_handler_entry{
-	int						she_type;
-	swapi_handler_entry_t	she_entry;
-}swapi_loop_handler_entry_t;
 
 static int swapi_loop_on_key(swapi_message_t *msg, void *data);
 static int swapi_loop_on_timer(swapi_message_t *msg, void *data);
@@ -61,19 +53,19 @@ static int swapi_loop_on_app_data(swapi_message_t *msg, void *data);
 static int swapi_loop_on_app_pri(swapi_message_t *msg, void *data);
 static int swapi_loop_on_default(swapi_message_t *msg, void *data);
 
-static swapi_loop_handler_entry_t	__gs_handlers[] = {
-	{ SWAPI_MSGTYPE_KEYBOARD,		{{NULL, NULL},	swapi_loop_on_key,		&__gs_data }},
-	{ SWAPI_MSGTYPE_TIMER,			{{NULL, NULL},	swapi_loop_on_timer,	&__gs_data }},
-	{ SWAPI_MSGTYPE_GSENSOR,		{{NULL, NULL},	swapi_loop_on_gsensor,	&__gs_data }},
-	{ SWAPI_MSGTYPE_GPS,			{{NULL, NULL},	swapi_loop_on_gps,		&__gs_data }},
-	{ SWAPI_MSGTYPE_PHONE_CALL,		{{NULL, NULL},	swapi_loop_on_call,		&__gs_data }},
-	{ SWAPI_MSGTYPE_PHONE_MSG,		{{NULL, NULL},	swapi_loop_on_msg,		&__gs_data }},
-	{ SWAPI_MSGTYPE_APP_DATA,		{{NULL, NULL},	swapi_loop_on_app_data,	&__gs_data }},
-	{ SWAPI_MSGTYPE_APP_PRIVATE,	{{NULL, NULL},	swapi_loop_on_app_pri,	&__gs_data }},
-	{ -1,							{{NULL, NULL},	swapi_loop_on_default,	NULL	   }}
+static swapi_handler_entry_t	__gs_handlers[] = {
+	{ kSWAPI_MSGTYPE_KEYBOARD,		{NULL, NULL},	swapi_loop_on_key,		&__gs_data },
+	{ kSWAPI_MSGTYPE_TIMER,			{NULL, NULL},	swapi_loop_on_timer,	&__gs_data },
+	{ kSWAPI_MSGTYPE_GSENSOR,		{NULL, NULL},	swapi_loop_on_gsensor,	&__gs_data },
+	{ kSWAPI_MSGTYPE_GPS,			{NULL, NULL},	swapi_loop_on_gps,		&__gs_data },
+	{ kSWAPI_MSGTYPE_PHONE_CALL,	{NULL, NULL},	swapi_loop_on_call,		&__gs_data },
+	{ kSWAPI_MSGTYPE_PHONE_MSG,		{NULL, NULL},	swapi_loop_on_msg,		&__gs_data },
+	{ kSWAPI_MSGTYPE_APP_DATA,		{NULL, NULL},	swapi_loop_on_app_data,	&__gs_data },
+	{ kSWAPI_MSGTYPE_APP_PRIVATE,	{NULL, NULL},	swapi_loop_on_app_pri,	&__gs_data },
+	{ kSWAPI_MSGTYPE_DEFAULT,		{NULL, NULL},	swapi_loop_on_default,	NULL	   }
 };
 
-static swapi_loop_handler_entry_t *get_handlers(){
+static swapi_handler_entry_t *get_handlers(){
 	return __gs_handlers;
 }
 
@@ -82,6 +74,7 @@ static swapi_loop_handler_entry_t *get_handlers(){
  */
 typedef int (*swap_init_func)();
 typedef int (*swap_fini_func)();
+
 typedef struct swapi_loop_swap{
 	swap_init_func		swap_init;
 	swap_fini_func		swap_fini;
@@ -140,7 +133,7 @@ static int swapi_loop_on_default(swapi_message_t *msg, void *data){
 
 static int swapi_loop_init(){
 	swapi_loop_t				*sl = get_loop();
-	swapi_loop_handler_entry_t	*she;
+	swapi_handler_entry_t		*she;
 	swapi_loop_swap_t			*sls;
 
 	ASSERT(sl != NULL);
@@ -167,8 +160,8 @@ static int swapi_loop_init(){
 
 	she = get_handlers();
 	while(she->she_type != -1){
-		INIT_LIST_HEAD(&she->she_entry.she_node);
-		swapi_handler_add(sl->sl_handler, she->she_type, &she->she_entry);
+		INIT_LIST_HEAD(&she->she_node);
+		swapi_handler_add(sl->sl_handler, she->she_type, she);
 		she++;
 	}
 	

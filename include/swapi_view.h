@@ -51,6 +51,9 @@ int swapi_view_is_fullscreen(swapi_view_t *sv);
 
 swapi_handler_t *swapi_view_get_handlers(swapi_view_t *sv);
 
+int swapi_view_module_init();
+int swapi_view_module_fini();
+
 #ifdef __cplusplus
 }
 #endif

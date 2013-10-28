@@ -12,8 +12,9 @@ LIBS =
 
 TARGET = libswapi.a
 
-common-obj = swapi_message.o swapi_queue.o swapi_handler.o \
-			 swapi_swap.o swapi_loop.o swapi.o
+common-obj = swapi_message.o swapi_queue.o swapi_handler.o				\
+			 swapi_swap.o swapi_loop.o swapi_shell.o swapi_render.o		\
+			 swapi_view.o swapi.o
 
 win32-obj = swapi_sys_cache.o swapi_sys_logger.o
 

@@ -11,10 +11,15 @@
 extern "C" {
 #endif
 
+#define kSWAPI_RENDER_SHELL_UPDATE		0x00000001
+#define kSWAPI_RENDER_SWAP_UPDATE		0x00000002
+
+#define kSWAPI_RENDER_ALL_UPDATE	(kSWAPI_RENDER_SHELL_UPDATE|kSWAPI_RENDER_SWAP_UPDATE)
+
 int swapi_render_init();
 int swapi_render_fini();
 
-int swapi_render_flush();
+int swapi_render_flush(int type);
 
 #ifdef __cplusplus
 }

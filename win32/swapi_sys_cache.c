@@ -103,11 +103,11 @@ void swapi_heap_free(void *ptr){
     free(ptr);
 }
 
-int swapi_cache_init(void *start, uint64_t size){
+int swapi_cache_module_init(void *start, uint64_t size){
     return 0;
 }
 
-int swapi_cache_fini(){
+int swapi_cache_module_fini(){
     return 0;
 }
 
