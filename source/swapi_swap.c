@@ -10,9 +10,12 @@
 
 static int swapi_swap_thread_routine(void *p){
 	swapi_swap_t	*ss = (swapi_swap_t *)p;
+	swapi_view_t	*pos, *vw;
 	swapi_message_t	msg;
 
 	ASSERT(ss != NULL);
+
+	swapi_log_info("swap thread is running...\n");
 
 	while(ss->ss_status){
 		if(swapi_queue_wait(ss->ss_queue, &msg) != 0){
@@ -22,11 +25,17 @@ static int swapi_swap_thread_routine(void *p){
 
 		// FIXME: check msg == destroy
 
+		swapi_log_info("swap got message:%d\n", msg.sm_type);
 
 		swapi_handler_invoke(ss->ss_handler, &msg);
 	}
 
 	// FIXME: free app's resource
+	
+	list_for_each_entry_safe(pos, vw, &ss->ss_views, sv_node){
+		swapi_view_destroy(vw);
+	}
+	
 	swapi_spin_fini(&ss->ss_lock);
 	swapi_handler_destroy(ss->ss_handler);
 	swapi_queue_destroy(ss->ss_queue);
@@ -38,6 +47,7 @@ static int swapi_swap_thread_routine(void *p){
 
 int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **swap){
 	swapi_swap_t	*ss;
+	swapi_view_t	*vw;
 
 	ASSERT(swap != NULL);
 	ASSERT(cbs != NULL);
@@ -70,8 +80,16 @@ int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **sw
 	ss->ss_cbs = cbs;
 	ss->ss_status =  1;
 
-	// FIXME: post oncreate / onstart message
+	// create default view
+	if(swapi_view_create(kSWAPI_VIEW_SWAPSCREEN, &vw) != 0){
+		swapi_log_warn("swap create default view fail\n");
+		goto exit_view;
+	}
+	swapi_swap_push_view(ss, vw);
 	
+	// swap in lifecycle
+	swapi_swap_status_change(ss, kSWAP_MSGTYPE_CREATE);
+
 	if(swapi_thread_create(&ss->ss_thrd, swapi_swap_thread_routine, ss) != 0){
 		swapi_log_warn("swap create swap thread fail!\n");
 		goto exit_thread;
@@ -82,6 +100,9 @@ int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **sw
 	return 0;
 
 exit_thread:
+	swapi_view_destroy(vw);
+
+exit_view:
 	swapi_spin_fini(&ss->ss_lock);
 
 exit_spin:
@@ -99,7 +120,7 @@ exit_queue:
 int swapi_swap_destroy(swapi_swap_t *ss){
 	ASSERT(ss != NULL);
 
-	// FIXME : post destroy message to ss
+	swapi_swap_status_change(ss, kSWAP_MSGTYPE_DESTROY);
 
 	return 0;
 }

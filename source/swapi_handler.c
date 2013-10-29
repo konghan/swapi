@@ -93,17 +93,24 @@ int swapi_handler_del(swapi_handler_t *sh, int type, swapi_handler_entry_t *she)
 
 int swapi_handler_invoke(swapi_handler_t *sh, swapi_message_t *msg){
 	swapi_handler_entry_t	*pos;
+	int						invoked = 0;
 
 	ASSERT(sh != NULL);
 	ASSERT(msg != NULL);
 
 	if(msg->sm_type >= sh->sh_slots){
-		swapi_log_warn("message : %s out range\n", (unsigned int)msg);
+		swapi_log_warn("message : %d out range\n", (unsigned int)msg);
 		return -ERANGE;
 	}
 
 	list_for_each_entry(pos, &(sh->sh_entries[msg->sm_type]), she_node){
 		pos->she_cbfunc(msg, pos->she_data);
+
+		invoked = 1;
+	}
+
+	if(!invoked){
+		swapi_log_warn("message : %d is without handler\n", msg->sm_type); 
 	}
 
 	// FIXME: if no entry ,call default func

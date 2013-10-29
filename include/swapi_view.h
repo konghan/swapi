@@ -18,7 +18,7 @@ extern "C" {
 
 enum {
 	kSWAPI_VIEW_FULLSCREEN = 0,
-	kSWAPI_VIEW_APPSCREEN,
+	kSWAPI_VIEW_SWAPSCREEN,
 };
 
 typedef struct swapi_view{

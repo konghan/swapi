@@ -85,24 +85,27 @@ int swapi_render_flush(int type){
 
 	ASSERT(sr->sr_init != 0);
 
+	swapi_log_warn("render flush\n");
+
 	swapi_spin_lock(&sr->sr_lock);
 
+	surface = swapi_shell_get_surface();
+	if(surface == NULL){
+		swapi_log_warn("shell without surface\n");
+		swapi_spin_unlock(&sr->sr_lock);
+		return -1;
+	}
+	
 	swap = swapi_loop_topswap();
 	if(swap == NULL){
 		swapi_log_warn("no swap on the top\n");
 		swapi_spin_unlock(&sr->sr_lock);
 		return -1;
 	}
+	
 	view = swapi_swap_topview(swap);
 	if(view == NULL){
 		swapi_log_warn("swap without veiw\n");
-		swapi_spin_unlock(&sr->sr_lock);
-		return -1;
-	}
-
-	surface = swapi_shell_get_surface();
-	if(surface == NULL){
-		swapi_log_warn("shell without surface\n");
 		swapi_spin_unlock(&sr->sr_lock);
 		return -1;
 	}
@@ -113,9 +116,9 @@ int swapi_render_flush(int type){
 			native_graphic_draw(swapi_view_get_surface(view), 0, 0,
 					sr->sr_width, sr->sr_height);
 	}else{
-		if(type & kSWAPI_RENDER_SHELL_UPDATE)		
+		if(type & kSWAPI_RENDER_SHELL_UPDATE)
 			native_graphic_draw(surface, 0, 0, sr->sr_width, kSWAPI_SHELL_HEIGHT);
-		
+
 		if(type & kSWAPI_RENDER_SWAP_UPDATE)
 			native_graphic_draw(swapi_view_get_surface(view), 0, kSWAPI_SHELL_HEIGHT,
 					sr->sr_width, sr->sr_height - kSWAPI_SHELL_HEIGHT);

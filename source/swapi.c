@@ -20,6 +20,43 @@
 
 static swapi_thread_t	__gs_main_loop_thrd;
 
+void swapi_debug(){
+	while (1){
+		Sleep(1000);
+	}
+}
+
+/*
+ * app init array
+ */
+typedef int (*swap_init_func)();
+typedef int (*swap_fini_func)();
+
+typedef struct swapi_loop_swap{
+	swap_init_func		swap_init;
+	swap_fini_func		swap_fini;
+}swapi_loop_swap_t;
+
+static int swap_default(){
+	return 0;
+}
+
+static swapi_loop_swap_t	__gs_swaps[] = {
+	{ swap_clock_init,	swap_clock_fini},
+	{ swap_default,		swap_default}
+};
+static swapi_loop_swap_t *get_swaps(){
+	return __gs_swaps;
+}
+
+static int init
+	sls = get_swaps();
+	while(sls->swap_init != swap_default){
+		sls->swap_init();
+		sls++;
+	}
+
+
 static int swapi_module_init(void *p){
 
 	swapi_queue_module_init();
@@ -29,6 +66,8 @@ static int swapi_module_init(void *p){
 	swapi_view_module_init();
 
 	swapi_swap_module_init();
+
+	swapi_loop_module_init();
 
 	swapi_shell_module_init();
 

@@ -13,6 +13,7 @@ typedef struct swap_clock {
 	int					sc_init;
 
 	swapi_swap_t		*sc_swap;
+
 }swap_clock_t;
 
 static int clock_on_create(swapi_swap_t *swa, int argc, char *argv[]);
@@ -112,3 +113,4 @@ int swap_clock_fini(){
 
 	return 0;
 }
+

@@ -80,6 +80,8 @@ static int swapi_shell_timer_handler(swapi_message_t *msg, void *data){
 	cairo_rectangle(sh->ss_context, 1, 1, 10, sh->ss_height - 4);
 	cairo_fill(sh->ss_context);
 
+	swapi_log_warn("shell timer handler\n");
+
 	swapi_render_flush(kSWAPI_RENDER_SHELL_UPDATE);
 
 	return 0;
@@ -103,6 +105,7 @@ static int swapi_shell_thread_routine(void *p){
 
 		// FIXME: check msg == destroy
 
+		swapi_log_warn("shell got message\n");
 
 		swapi_handler_invoke(sh->ss_handler, &msg);
 	}

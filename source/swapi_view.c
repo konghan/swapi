@@ -55,7 +55,7 @@ int swapi_view_create(int fullscreen, swapi_view_t **sv){
 			h = ngi.ngi_height;
 			w = ngi.ngi_width;
 			break;
-		case kSWAPI_VIEW_APPSCREEN:
+		case kSWAPI_VIEW_SWAPSCREEN:
 			h = ngi.ngi_height - kSWAPI_SHELL_HEIGHT;
 			w = ngi.ngi_width;
 			break;

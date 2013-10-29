@@ -69,31 +69,6 @@ static swapi_handler_entry_t *get_handlers(){
 	return __gs_handlers;
 }
 
-/*
- * app init array
- */
-typedef int (*swap_init_func)();
-typedef int (*swap_fini_func)();
-
-typedef struct swapi_loop_swap{
-	swap_init_func		swap_init;
-	swap_fini_func		swap_fini;
-}swapi_loop_swap_t;
-
-static int swap_default(){
-	return 0;
-}
-
-static swapi_loop_swap_t	__gs_swaps[] = {
-	{ swap_clock_init,	swap_clock_fini},
-	{ swap_default,		swap_default}
-};
-static swapi_loop_swap_t *get_swaps(){
-	return __gs_swaps;
-}
-
-
-
 static int swapi_loop_on_key(swapi_message_t *msg, void *data){
 //	switch(msg->mm_type
 	return 0;
@@ -134,7 +109,6 @@ static int swapi_loop_on_default(swapi_message_t *msg, void *data){
 static int swapi_loop_init(){
 	swapi_loop_t				*sl = get_loop();
 	swapi_handler_entry_t		*she;
-	swapi_loop_swap_t			*sls;
 
 	ASSERT(sl != NULL);
 
@@ -159,20 +133,13 @@ static int swapi_loop_init(){
 	}
 
 	she = get_handlers();
-	while(she->she_type != -1){
+	while(she->she_type != kSWAPI_MSGTYPE_DEFAULT){
 		INIT_LIST_HEAD(&she->she_node);
 		swapi_handler_add(sl->sl_handler, she->she_type, she);
 		she++;
 	}
-	
-	sl->sl_cur  = NULL;
-	sls = get_swaps();
-	while(sls->swap_init != swap_default){
-		sls->swap_init();
-		sls++;
-	}
 
-//	sl->sl_cur = list_first_entry(&sl->sl_swaps, swapi_swap_t, ss_node);
+	sl->sl_cur  = NULL;
 
 	sl->sl_init = 1;
 	
@@ -233,12 +200,7 @@ int swapi_loop_post(swapi_message_t *msg){
 int swapi_loop_run(void *p){
 	swapi_loop_t	*sl = get_loop();
 	swapi_message_t	msg;
-
-	if(swapi_loop_init() != 0){
-		swapi_log_warn("swapi loop init fail\n");
-		return -1;
-	}
-
+	
 	// FIXME: load lua swap
 
 	while(1){

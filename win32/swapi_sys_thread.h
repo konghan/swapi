@@ -23,11 +23,12 @@ extern "C"{
 
 // condition variable, used internally
 typedef struct __swapi_convar_data{
+	// handle for semphore
 	HANDLE		cd_handle;
 }__swapi_convar_t;
 
 static inline  int __swapi_convar_init(__swapi_convar_t *cv){
-	cv->cd_handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+	cv->cd_handle = CreateSemaphore(NULL, 1, 1, NULL);
 	if(cv->cd_handle != NULL){
 		return 0;
 	}else{
@@ -43,7 +44,7 @@ static inline int __swapi_convar_fini(__swapi_convar_t *cv){
 }
 
 static inline int __swapi_convar_signal(__swapi_convar_t *cv){
-	return PulseEvent(cv->cd_handle) ? 0 : -1;
+	return ReleaseSemaphore(cv->cd_handle, 1, NULL) ? 0 : -1;
 }
 
 static inline int __swapi_convar_wait(__swapi_convar_t *cv){

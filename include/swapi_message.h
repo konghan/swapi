@@ -18,10 +18,23 @@ enum {
 	kSWAPI_MSGTYPE_GPS,
 	kSWAPI_MSGTYPE_PHONE_CALL,
 	kSWAPI_MSGTYPE_PHONE_MSG,
+	kSWAPI_MSGTYPE_SWAP,
 
 	kSWAPI_MSGTYPE_APP_DATA,
 	kSWAPI_MSGTYPE_APP_PRIVATE,
 	kSWAPI_MSGTYPE_END,
+};
+
+/*
+ * used by swap & loop, for swap's four status.
+ * this type is used in sm_data
+ */
+enum swapi_swap_msgtype{
+	kSWAP_MSGTYPE_CREATE = 0,
+	kSWAP_MSGTYPE_DESTROY,
+	
+	kSWAP_MSGTYPE_PAUSE,
+	kSWAP_MSGTYPE_RESUME,
 };
 
 typedef struct swapi_message{
