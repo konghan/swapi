@@ -28,7 +28,7 @@ typedef struct __swapi_convar_data{
 }__swapi_convar_t;
 
 static inline  int __swapi_convar_init(__swapi_convar_t *cv){
-	cv->cd_handle = CreateSemaphore(NULL, 1, 1, NULL);
+	cv->cd_handle = CreateSemaphore(NULL, 0, 1, NULL);
 	if(cv->cd_handle != NULL){
 		return 0;
 	}else{

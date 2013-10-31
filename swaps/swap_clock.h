@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-int swap_clock_init();
+int swap_clock_init(swapi_swap_t **swap);
 int swap_clock_fini();
 
 #ifdef __cplusplus

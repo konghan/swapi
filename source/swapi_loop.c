@@ -8,6 +8,7 @@
 #include "swapi_handler.h"
 #include "swapi_message.h"
 #include "swapi_swap.h"
+#include "swapi_shell.h"
 
 #include "swapi_sys_thread.h"
 #include "swapi_sys_logger.h"
@@ -75,6 +76,16 @@ static int swapi_loop_on_key(swapi_message_t *msg, void *data){
 }
 
 static int swapi_loop_on_timer(swapi_message_t *msg, void *data){
+	swapi_loop_t	*sl = get_loop();
+	swapi_swap_t	*swap;
+
+	list_for_each_entry(swap, &sl->sl_swaps, ss_node){
+		swapi_log_info("post message %d to %s\n", msg->sm_type, swap->ss_name);
+		swapi_swap_post(swap, msg);
+	}
+
+	swapi_shell_post(msg);
+	
 	return 0;
 }
 
@@ -106,7 +117,7 @@ static int swapi_loop_on_default(swapi_message_t *msg, void *data){
 	return 0;
 }
 
-static int swapi_loop_init(){
+int swapi_loop_module_init(){
 	swapi_loop_t				*sl = get_loop();
 	swapi_handler_entry_t		*she;
 
@@ -121,15 +132,12 @@ static int swapi_loop_init(){
 
 	if(swapi_queue_create(sizeof(swapi_message_t), kSWAPI_QUEUE_DEFAULT_LENGTH, &sl->sl_queue) != 0){
 		swapi_log_warn("swapi create queue fail!\n");
-		swapi_spin_fini(&sl->sl_lock);
-		return -1;
+		goto exit_queue;
 	}
 
 	if(swapi_handler_create(kSWAPI_HANDLER_DEFAULT_SLOTS, &sl->sl_handler) != 0){
 		swapi_log_warn("swapi create handler fail!\n");
-		swapi_queue_destroy(sl->sl_queue);
-		swapi_spin_fini(&sl->sl_lock);
-		return -1;
+		goto exit_handler;
 	}
 
 	she = get_handlers();
@@ -138,12 +146,28 @@ static int swapi_loop_init(){
 		swapi_handler_add(sl->sl_handler, she->she_type, she);
 		she++;
 	}
-
 	sl->sl_cur  = NULL;
 
+	if(swap_clock_init(&sl->sl_clock) != 0){
+		swapi_log_warn("swap clock init fail\n");
+		goto exit_clock;
+	}
+	swapi_loop_add_swap(sl->sl_clock);
+
 	sl->sl_init = 1;
-	
+
 	return 0;
+	
+exit_queue:
+	swapi_spin_fini(&sl->sl_lock);
+
+exit_handler:
+	swapi_queue_destroy(sl->sl_queue);
+
+exit_clock:
+	swapi_handler_destroy(sl->sl_handler);
+
+	return -1;
 }
 
 
@@ -176,7 +200,7 @@ int swapi_loop_add_swap(swapi_swap_t *swap){
 	return 0;
 }
 
-static int swapi_loop_fini(){
+int swapi_loop_module_fini(){
 	swapi_loop_t *sl = get_loop();
 
 	ASSERT(sl != NULL);
@@ -201,7 +225,10 @@ int swapi_loop_run(void *p){
 	swapi_loop_t	*sl = get_loop();
 	swapi_message_t	msg;
 	
-	// FIXME: load lua swap
+	msg.sm_type = kSWAPI_MSGTYPE_TIMER;
+	msg.sm_size = 0;
+	msg.sm_data = 0;
+	swapi_queue_post(sl->sl_queue, &msg);
 
 	while(1){
 		if(swapi_queue_wait(sl->sl_queue, &msg) != 0){
@@ -211,8 +238,6 @@ int swapi_loop_run(void *p){
 
 		swapi_handler_invoke(sl->sl_handler, &msg);
 	}
-
-	swapi_loop_fini();
 
 	return 0;
 }

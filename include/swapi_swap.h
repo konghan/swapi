@@ -29,9 +29,6 @@ typedef struct swapi_swap_cbs{
 	int (*on_create)(swapi_swap_t *swap, int argc, char *argv[]);
 	int (*on_destroy)(swapi_swap_t *swap);
 
-	int (*on_start)(swapi_swap_t *swap);
-	int (*on_stop)(swapi_swap_t *swap);
-
 	int (*on_pause)(swapi_swap_t *swap);
 	int (*on_resume)(swapi_swap_t *swap);
 
@@ -74,8 +71,8 @@ static inline int swapi_swap_status_change(swapi_swap_t *swap, int status){
 	swapi_message_t		msg;
 
 	msg.sm_type = kSWAPI_MSGTYPE_SWAP;
-	msg.sm_size = 0;
-	msg.sm_data = status;
+	msg.sm_size = status;
+	msg.sm_data = 0;
 
 	return swapi_swap_post(swap, &msg);
 }

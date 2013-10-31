@@ -28,11 +28,11 @@ typedef struct swapi_shell_trayicon{
 }swapi_shell_trayicon_t;
 
 typedef struct swapi_shell{
-	int		ss_battery;
-	int		ss_signals;
-	int		ss_message;
-	int		ss_tips;
-	int		ss_alarm;
+	int					ss_battery;
+	int					ss_signals;
+	int					ss_message;
+	int					ss_tips;
+	int					ss_alarm;
 	
 	struct list_head	ss_swaps;
 	
@@ -99,13 +99,13 @@ static int swapi_shell_thread_routine(void *p){
 
 	while(sh->ss_status){
 		if(swapi_queue_wait(sh->ss_queue, &msg) != 0){
-			swapi_log_warn("swap wait message failn");
+			swapi_log_warn("swap wait message fail!\n");
 			break;
 		}
 
 		// FIXME: check msg == destroy
 
-		swapi_log_warn("shell got message\n");
+		swapi_log_info("shell got message\n");
 
 		swapi_handler_invoke(sh->ss_handler, &msg);
 	}
@@ -123,7 +123,6 @@ int swapi_shell_module_init(){
 	native_graphic_info_t	ngi;
 	swapi_shell_t			*sh = get_shell();
 	swapi_handler_entry_t	*she;
-	swapi_message_t			msg;
 	
 	native_graphic_getinfo(&ngi);
 	sh->ss_width = ngi.ngi_width;
@@ -170,13 +169,6 @@ int swapi_shell_module_init(){
 	}
 
 	sh->ss_status = 1;
-
-	// send first timer message to let it draw himself
-	msg.sm_type = kSWAPI_MSGTYPE_TIMER;
-	msg.sm_size = 0;
-	msg.sm_data = 0;
-
-	swapi_queue_post(sh->ss_queue, &msg);
 
 	return 0;
 

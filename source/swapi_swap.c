@@ -8,10 +8,52 @@
 #include "swapi_sys_logger.h"
 #include "swapi_sys_cache.h"
 
+static int swapi_swap_on_swapmessage(swapi_message_t *msg, void *data);
+
+static swapi_handler_entry_t	__gs_handler_entry[] = {
+	{.she_type = kSWAPI_MSGTYPE_SWAP, .she_node = { }, 
+		.she_cbfunc = swapi_swap_on_swapmessage, .she_data = NULL},
+	{.she_type = kSWAPI_MSGTYPE_DEFAULT, .she_node = { }, 
+		.she_cbfunc = NULL, .she_data = NULL},
+};
+
+static inline swapi_handler_entry_t *get_handler(){
+	return __gs_handler_entry;
+}
+
+static int swapi_swap_on_swapmessage(swapi_message_t *msg, void *data){
+	swapi_swap_t	*swap = (swapi_swap_t *)data;
+
+	ASSERT(swap != NULL);
+
+	swapi_log_info("swap on swap message !\n");
+	
+	switch(msg->sm_size){
+		case kSWAP_MSGTYPE_CREATE:
+			swap->ss_cbs->on_create(swap, 0, NULL);
+			break;
+			
+		case kSWAP_MSGTYPE_DESTROY:
+			swap->ss_cbs->on_destroy(swap);
+			break;
+
+		case kSWAP_MSGTYPE_PAUSE:
+			swap->ss_cbs->on_pause(swap);
+			break;
+			
+		case kSWAP_MSGTYPE_RESUME:
+			swap->ss_cbs->on_resume(swap);
+			break;
+	}
+
+	return 0;
+}
+
 static int swapi_swap_thread_routine(void *p){
-	swapi_swap_t	*ss = (swapi_swap_t *)p;
-	swapi_view_t	*pos, *vw;
-	swapi_message_t	msg;
+	swapi_swap_t		*ss = (swapi_swap_t *)p;
+	swapi_view_t		*pos, *vw;
+	swapi_handler_t		*handler;
+	swapi_message_t		msg;
 
 	ASSERT(ss != NULL);
 
@@ -19,15 +61,26 @@ static int swapi_swap_thread_routine(void *p){
 
 	while(ss->ss_status){
 		if(swapi_queue_wait(ss->ss_queue, &msg) != 0){
-			swapi_log_warn("swap wait message failn");
+			swapi_log_warn("swap wait message fail\n");
 			break;
 		}
 
-		// FIXME: check msg == destroy
+		switch(msg.sm_type) {
+			case kSWAPI_MSGTYPE_SWAP:
+				swapi_handler_invoke(ss->ss_handler, &msg);
+				break;
 
-		swapi_log_info("swap got message:%d\n", msg.sm_type);
+			case kSWAPI_MSGTYPE_TIMER:
+			case kSWAPI_MSGTYPE_KEYBOARD:
+				vw = swapi_swap_topview(ss);
+				handler = swapi_view_get_handler(vw);
 
-		swapi_handler_invoke(ss->ss_handler, &msg);
+				swapi_handler_invoke(handler, &msg);
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	// FIXME: free app's resource
@@ -46,8 +99,9 @@ static int swapi_swap_thread_routine(void *p){
 
 
 int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **swap){
-	swapi_swap_t	*ss;
-	swapi_view_t	*vw;
+	swapi_swap_t			*ss;
+	swapi_view_t			*vw;
+	swapi_handler_entry_t	*she;
 
 	ASSERT(swap != NULL);
 	ASSERT(cbs != NULL);
@@ -75,6 +129,7 @@ int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **sw
 		goto exit_spin;
 	}
 
+	INIT_LIST_HEAD(&ss->ss_views);
 	INIT_LIST_HEAD(&ss->ss_node);
 	strncpy(ss->ss_name, name, kSWAPI_SWAP_NAME_LEN-1);
 	ss->ss_cbs = cbs;
@@ -86,7 +141,18 @@ int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **sw
 		goto exit_view;
 	}
 	swapi_swap_push_view(ss, vw);
-	
+
+	// add default handler
+	she = get_handler();
+	while(she->she_type != kSWAPI_MSGTYPE_DEFAULT){
+		INIT_LIST_HEAD(&she->she_node);
+		she->she_data = ss;
+
+		swapi_handler_add(ss->ss_handler, she->she_type, she);
+
+		she++;
+	}
+
 	// swap in lifecycle
 	swapi_swap_status_change(ss, kSWAP_MSGTYPE_CREATE);
 
