@@ -54,6 +54,11 @@ static swapi_shell_t *get_shell(){
 	return &__gs_ss;
 }
 
+#define kSWAPI_SHELL_SIGNAL_ARC_NUM			5
+
+/*
+ * shell handlers
+ */
 static int swapi_shell_timer_handler(swapi_message_t *msg, void *data);
 static int swapi_shell_default_handler(swapi_message_t *msg, void *data);
 
@@ -71,15 +76,38 @@ static inline swapi_handler_entry_t *get_handler(){
 static int swapi_shell_timer_handler(swapi_message_t *msg, void *data){
 	swapi_shell_t	*sh = (swapi_shell_t *)data;
 
+	int				i;
+
 	ASSERT((msg != NULL) && (data != NULL));
 
 	// FIXME: update system status value
 
-	// drawing ...
-	cairo_set_source_rgb(sh->ss_context, 0.6, 0.6, 0.6);
-	cairo_rectangle(sh->ss_context, 1, 1, 10, sh->ss_height - 4);
+	// paint backgroud color
+	cairo_set_source_rgb(sh->ss_context, 1, 1, 1);
+	cairo_paint(sh->ss_context);
+//	cairo_rectangle(sh->ss_context, 0, 0, sh->ss_width, sh->ss_height);
+//	cairo_fill(sh->ss_context);
+
+	// draw battery
+	cairo_set_source_rgb(sh->ss_context, 0.2, 0.2, 0.2);
+	cairo_rectangle(sh->ss_context, 2, 1, 20, sh->ss_height - 2);
+	cairo_rectangle(sh->ss_context, 22, 3, 2, 4);
 	cairo_fill(sh->ss_context);
 
+	// draw signal
+	sh->ss_signals = 60;
+	cairo_set_line_width(sh->ss_context, 1.0);
+	for(i = 0; i < kSWAPI_SHELL_SIGNAL_ARC_NUM; i++){
+		if(sh->ss_signals <= kSWAPI_SHELL_SIGNAL_ARC_NUM*i*4){
+			cairo_arc(sh->ss_context, 80+i*10, 5, 3, 0, 2*3.14);
+			cairo_stroke(sh->ss_context);
+		}else{
+			cairo_arc(sh->ss_context, 80+i*10, 5, 4, 0, 2*3.14);
+			cairo_fill(sh->ss_context);
+		}
+	}
+//	cairo_fill_preserve(sh->ss_context);
+	
 	swapi_log_warn("shell timer handler\n");
 
 	swapi_render_flush(kSWAPI_RENDER_SHELL_UPDATE);

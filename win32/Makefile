@@ -35,5 +35,6 @@ $(TARGET) : $(win32-obj) $(common-obj) $(swap-obj)
 
 
 clean:
+	make -C ../../emulator/win32 clean
 	rm -f $(common-obj) $(win32-obj) $(swap-obj) $(TARGET) *.exe
 

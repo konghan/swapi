@@ -89,10 +89,25 @@ static int clock_on_timer(swapi_message_t *msg, void *data){
 		return -1;
 	}
 	
-	// drawing ...
-	cairo_set_source_rgb(context, 0.3, 0.6, 0.8);
-	cairo_rectangle(context, 10, 10, 80, 80);
-	cairo_fill(context);
+	// draw back ground
+	cairo_set_source_rgb(context, 0.8, 0.8, 0.8);
+	cairo_paint(context);
+
+	// draw clock face
+	cairo_set_source_rgb(context, 0.1, 0.1, 0.1);
+	cairo_arc(context, 64, 59, 56, 0, 2*3.14);
+	cairo_stroke(context);
+
+	// draw hour/minute
+	cairo_set_line_width(context, 3.0);
+	cairo_move_to(context, 64, 59);
+	cairo_line_to(context, 100, 59);
+	cairo_stroke(context);
+	
+	cairo_set_line_width(context, 2.0);
+	cairo_move_to(context, 64, 59);
+	cairo_line_to(context, 14, 59);
+	cairo_stroke(context);
 
 	swapi_render_flush(kSWAPI_RENDER_SWAP_UPDATE);
 
