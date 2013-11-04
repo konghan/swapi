@@ -38,6 +38,24 @@ enum swapi_swap_msgtype{
 	kSWAP_MSGTYPE_RESUME,
 };
 
+/*
+ * used by keyboard driver
+ */
+enum swapi_keydrv_msgtype{
+	kNATV_KEYDRV_ENTER = 0,
+	kNATV_KEYDRV_ESCAPE,
+	kNATV_KEYDRV_UP,
+	kNATV_KEYDRV_DOWN,
+
+	kNATV_KEYDRV_ENTERUP,
+	kNATV_KEYDRV_ENTERDOWN,
+	kNATV_KEYDRV_ESCAPEUP,
+	kNATV_KEYDRV_ESCAPEDOWN,
+
+	kNATV_KEYDRV_CALL,
+	kNATV_KEYDRV_MESSAGE,
+};
+
 typedef struct swapi_message{
 	unsigned short		sm_type;
 	unsigned short		sm_size;
