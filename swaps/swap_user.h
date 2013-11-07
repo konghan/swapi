@@ -6,6 +6,8 @@
 #ifndef __SWAP_USER_H__
 #define __SWAP_USER_H__
 
+#include "list.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -19,9 +21,11 @@ enum {
 typedef struct uuid { char uuid[16]; }uuid_t;
 
 typedef struct swap_user{
-	uuid_t		su_uid;
-	char		su_name[kSWAP_USER_NAME_LEN];
-	int			su_pic;
+	struct list_head	su_node;
+
+	uuid_t				su_uid;
+	char				su_name[kSWAP_USER_NAME_LEN];
+	int					su_pic;
 }swap_user_t;
 
 int swap_user_add(swap_user_t *su);
@@ -29,11 +33,11 @@ int swap_user_del(swap_user_t *su);
 
 int swap_user_count();
 
-int swap_user_iter_init(int *iter);
-int swap_user_iter_fini(int iter);
-swap_user_t *swap_user_iter_next(int iter);
-swap_user_t *swap_user_iter_prev(int iter);
+swap_user_t *swap_user_first();
+swap_user_t *swap_user_last();
 
+swap_user_t *swap_user_next();
+swap_user_t *swap_user_prev();
 
 int swap_user_init();
 int swap_user_fini();
