@@ -16,7 +16,8 @@ common-obj = swapi_message.o swapi_queue.o swapi_handler.o				\
 			 swapi_swap.o swapi_loop.o swapi_shell.o swapi_render.o		\
 			 swapi_view.o swapi.o
 
-win32-obj = swapi_sys_cache.o swapi_sys_logger.o
+win32-obj = swapi_sys_cache.o swapi_sys_logger.o						\
+			natv_time.o natv_io.o natv_cfgsrv.o
 
 swap-obj = swap_clock.o
 

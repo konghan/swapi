@@ -9,6 +9,9 @@
 #include <ws2tcpip.h>
 #include <stdio.h>
 
+#include "swapi_sys_thread.h"
+#include "swapi_sys_logger.h"
+
 #define kNATV_SOCK_ADDR_SIZE			20
 
 #define kNATV_SOCK_SEGMENT				"natv-sock"

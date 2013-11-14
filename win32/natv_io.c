@@ -4,9 +4,17 @@
  */
 
 #include "natv_io.h"
+#include "swapi_sys_atomic.h"
+#include "swapi_sys_cache.h"
+
+#include <io.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define kNATV_IO_ROOTFS			"/home/konghan/swapi/rootfs/"
 #define kNATV_IO_SWAPS			"swaps/"
+#define kNATV_IO_DATA			"/data/"
 
 #define kNATV_IO_MAX_PATH		256
 
@@ -38,7 +46,7 @@ int natv_io_open(const char *swap, natv_io_t **fio){
 		return -1;
 	}
 
-	ni = heap_alloc(sizeof(*ni));
+	ni = swapi_heap_alloc(sizeof(*ni));
 	if(ni == NULL){
 		return -1;
 	}
@@ -46,10 +54,10 @@ int natv_io_open(const char *swap, natv_io_t **fio){
 
 	strcpy(ni->ni_path, kNATV_IO_ROOTFS);
 	strcat(ni->ni_path, kNATV_IO_SWAPS);
-	strncat(ni->ni_path, swap);
+	strcat(ni->ni_path, swap);
 
 	if(_access(ni->ni_path, 0) != 0){
-		heap_free(ni);
+		swapi_heap_free(ni);
 		return -1;
 	}
 
@@ -65,7 +73,7 @@ int natv_io_close(natv_io_t *fio){
 
 	if(fio->ni_status && (fio->ni_refs == 0)){
 		fio->ni_status = 0;
-		heap_free(fio);
+		swapi_heap_free(fio);
 		return 0;
 	}
 
@@ -81,7 +89,7 @@ int natv_io_fopen(natv_io_t *fio, const char *file, natv_file_t **nf){
 		return -1;
 	}
 
-	f = heap_alloc(sizeof(*f));
+	f = swapi_heap_alloc(sizeof(*f));
 	if(f == NULL){
 		return -ENOMEM;
 	}
@@ -93,7 +101,7 @@ int natv_io_fopen(natv_io_t *fio, const char *file, natv_file_t **nf){
 
 	f->nf_file = fopen(f->nf_name, "r");
 	if(f->nf_file == NULL){
-		heap_free(f);
+		swapi_heap_free(f);
 		return -1;
 	}
 
@@ -112,7 +120,7 @@ int natv_io_fclose(natv_file_t *nf){
 		nf->nf_file = NULL;
 	}
 
-	heap_free(nf);
+	swapi_heap_free(nf);
 
 	return 0;
 }
@@ -124,8 +132,8 @@ size_t natv_io_fread(natv_file_t *nf, char *buf, size_t size){
 	return fread(buf, size, 0, nf->nf_file);
 }
 
-int natv_io_fseek(natv_file_t *file, long offset, int origin){
-	ASSERT((nf != NULL) && (buf != NULL));
+int natv_io_fseek(natv_file_t *nf, long offset, int origin){
+	ASSERT(nf != NULL);
 	ASSERT(nf->nf_file != NULL);
 
 	return fseek(nf->nf_file, offset, origin);
@@ -141,7 +149,7 @@ int natv_io_dopen(natv_io_t *fio, const char *file, natv_file_t **nf){
 		return -1;
 	}
 
-	f = heap_alloc(sizeof(*f));
+	f = swapi_heap_alloc(sizeof(*f));
 	if(f == NULL){
 		return -ENOMEM;
 	}
@@ -153,7 +161,7 @@ int natv_io_dopen(natv_io_t *fio, const char *file, natv_file_t **nf){
 
 	f->nf_file = fopen(f->nf_name, "r+");
 	if(f->nf_file == NULL){
-		heap_free(f);
+		swapi_heap_free(f);
 		return -1;
 	}
 
@@ -172,7 +180,7 @@ int natv_io_dclose(natv_file_t *nf){
 		nf->nf_file = NULL;
 	}
 
-	heap_free(nf);
+	swapi_heap_free(nf);
 
 	return 0;
 }

@@ -6,6 +6,7 @@
 #ifndef __NATV_IO_H__
 #define __NATV_IO_H__
 
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -61,8 +61,8 @@ static swapi_handler_entry_t	__gs_handlers[] = {
 	{ kSWAPI_MSGTYPE_GPS,			{NULL, NULL},	swapi_loop_on_gps,		&__gs_data },
 	{ kSWAPI_MSGTYPE_PHONE_CALL,	{NULL, NULL},	swapi_loop_on_call,		&__gs_data },
 	{ kSWAPI_MSGTYPE_PHONE_MSG,		{NULL, NULL},	swapi_loop_on_msg,		&__gs_data },
-	{ kSWAPI_MSGTYPE_APP_DATA,		{NULL, NULL},	swapi_loop_on_app_data,	&__gs_data },
-	{ kSWAPI_MSGTYPE_APP_PRIVATE,	{NULL, NULL},	swapi_loop_on_app_pri,	&__gs_data },
+	{ kSWAPI_MSGTYPE_SWAP_DATA,		{NULL, NULL},	swapi_loop_on_app_data,	&__gs_data },
+	{ kSWAPI_MSGTYPE_SWAP_PRIVATE,	{NULL, NULL},	swapi_loop_on_app_pri,	&__gs_data },
 	{ kSWAPI_MSGTYPE_DEFAULT,		{NULL, NULL},	swapi_loop_on_default,	NULL	   }
 };
 

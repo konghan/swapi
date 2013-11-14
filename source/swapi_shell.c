@@ -89,13 +89,20 @@ static int swapi_shell_timer_handler(swapi_message_t *msg, void *data){
 //	cairo_fill(sh->ss_context);
 
 	// draw battery
-	cairo_set_source_rgb(sh->ss_context, 0.2, 0.2, 0.2);
-	cairo_rectangle(sh->ss_context, 2, 1, 20, sh->ss_height - 2);
-	cairo_rectangle(sh->ss_context, 22, 3, 2, 4);
+	cairo_set_line_width(sh->ss_context, 1.0);
+	cairo_set_source_rgb(sh->ss_context, 0, 0, 0);
+	cairo_rectangle(sh->ss_context, 2, 2, 16, sh->ss_height - 4);
+	cairo_rectangle(sh->ss_context, 18, 4, 2, 2);
+	cairo_stroke(sh->ss_context);
+
+	cairo_set_source_rgb(sh->ss_context, 0, 1, 0);
+	cairo_rectangle(sh->ss_context, 3, 3, 10, sh->ss_height - 6);
 	cairo_fill(sh->ss_context);
+
 
 	// draw signal
 	sh->ss_signals = 60;
+	cairo_set_source_rgb(sh->ss_context, 0, 0, 0);
 	cairo_set_line_width(sh->ss_context, 1.0);
 	for(i = 0; i < kSWAPI_SHELL_SIGNAL_ARC_NUM; i++){
 		if(sh->ss_signals <= kSWAPI_SHELL_SIGNAL_ARC_NUM*i*4){

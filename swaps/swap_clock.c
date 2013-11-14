@@ -14,10 +14,14 @@
 
 #include <cairo/cairo.h>
 
+#define kSWAP_CLOCK_PKG_DIR			"../rootfs/swaps/clock"
+#define kSWAP_CLOCK_FACE			"../rootfs/swaps/clock/clock06.png"
+
 typedef struct swap_clock {
 	swapi_spinlock_t	sc_lock;
 	int					sc_init;
 
+	cairo_surface_t		*sc_face;
 	swapi_swap_t		*sc_swap;
 
 }swap_clock_t;
@@ -65,6 +69,27 @@ static inline swapi_handler_entry_t *get_handler(){
 	return __gs_handler_entry;
 }
 
+static void clock_draw_hour(cairo_t *cr, int hour){
+
+	cairo_set_source_rgb(cr, 1, 0, 0);
+	cairo_set_line_width(cr, 3.0);
+	
+	cairo_move_to(cr, 64, 59);
+	cairo_line_to(cr, 100, 59);
+
+}
+
+static void clock_draw_minute(cairo_t *cr, int minute){
+
+	cairo_set_line_width(cr, 2.0);
+
+	cairo_move_to(cr, 64, 59);
+	cairo_line_to(cr, 14, 59);
+}
+
+static void clock_draw_second(cairo_t *cr, int second){
+}
+
 static int clock_on_timer(swapi_message_t *msg, void *data){
 	swap_clock_t		*sc = (swap_clock_t *)data;
 	swapi_view_t		*sv;
@@ -88,25 +113,24 @@ static int clock_on_timer(swapi_message_t *msg, void *data){
 		swapi_log_warn("clock view without cairo!\n");
 		return -1;
 	}
-	
-	// draw back ground
-	cairo_set_source_rgb(context, 0.8, 0.8, 0.8);
-	cairo_paint(context);
 
-	// draw clock face
-	cairo_set_source_rgb(context, 0.1, 0.1, 0.1);
-	cairo_arc(context, 64, 59, 56, 0, 2*3.14);
-	cairo_stroke(context);
+	if(sc->sc_face != NULL){
+		cairo_set_source_surface(context, sc->sc_face, 0, 0);
+		cairo_paint(context);
+	}else{
+		// draw back ground
+		cairo_set_source_rgb(context, 0.8, 0.8, 0.8);
+		cairo_paint(context);
 
-	// draw hour/minute
-	cairo_set_line_width(context, 3.0);
-	cairo_move_to(context, 64, 59);
-	cairo_line_to(context, 100, 59);
-	cairo_stroke(context);
+		// draw clock face
+		cairo_set_source_rgb(context, 0.1, 0.1, 0.1);
+		cairo_arc(context, 64, 59, 56, 0, 2*3.14);
+		cairo_stroke(context);
+	}
+
+	clock_draw_hour(context, 11);
+	clock_draw_minute(context, 25);
 	
-	cairo_set_line_width(context, 2.0);
-	cairo_move_to(context, 64, 59);
-	cairo_line_to(context, 14, 59);
 	cairo_stroke(context);
 
 	swapi_render_flush(kSWAPI_RENDER_SWAP_UPDATE);
@@ -117,15 +141,29 @@ static int clock_on_timer(swapi_message_t *msg, void *data){
 static int clock_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	swapi_handler_entry_t	*she = get_handler();
 	swapi_view_t			*vw;
+	swap_clock_t			*sc;
 
 	swapi_log_info("clock app on create\n");
 
+	// init top view callbacks
 	vw = swapi_swap_topview(sw);
 
 	while(she->she_type != kSWAPI_MSGTYPE_DEFAULT){
 		INIT_LIST_HEAD(&she->she_node);
 		swapi_view_add_handler(vw, she->she_type, she);
 		she++;
+	}
+
+	// load clock face
+	sc = (swap_clock_t *)swapi_swap_get(sw);
+	if(sc == NULL){
+		swapi_log_warn("swap clock not setting!\n");
+		return -1;
+	}
+	sc->sc_face = cairo_image_surface_create_from_png(kSWAP_CLOCK_FACE);
+	if(sc->sc_face == NULL){
+		swapi_log_warn("swap clock load png face fail!\n");
+		return -1;
 	}
 
 	return 0;
@@ -160,6 +198,7 @@ int swap_clock_init(swapi_swap_t **swap){
 	}
 
 	sc->sc_init = 1;
+	swapi_swap_set(sc->sc_swap, sc);
 
 	*swap = sc->sc_swap;
 

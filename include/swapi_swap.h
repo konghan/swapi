@@ -53,7 +53,17 @@ typedef struct swapi_swap{
 	int					ss_status;
 
 	unsigned int		ss_type;
+
+	void				*ss_data;
 }swapi_swapi_t;
+
+static inline void swapi_swap_set(swapi_swap_t *swap, void *data){
+	swap->ss_data = data;
+}
+
+static inline void *swapi_swap_get(swapi_swap_t *swap){
+	return swap->ss_data;
+}
 
 int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **swap);
 int swapi_swap_destroy(swapi_swap_t *swap);
