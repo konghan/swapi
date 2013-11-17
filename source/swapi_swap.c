@@ -67,10 +67,10 @@ static int swapi_swap_thread_routine(void *p){
 
 		switch(msg.sm_type) {
 			case kSWAPI_MSGTYPE_SWAP:
+			case kSWAPI_MSGTYPE_TIMER:
 				swapi_handler_invoke(ss->ss_handler, &msg);
 				break;
 
-			case kSWAPI_MSGTYPE_TIMER:
 			case kSWAPI_MSGTYPE_KEYBOARD:
 				vw = swapi_swap_topview(ss);
 				handler = swapi_view_get_handler(vw);
@@ -136,7 +136,7 @@ int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **sw
 	ss->ss_status =  1;
 
 	// create default view
-	if(swapi_view_create(kSWAPI_VIEW_SWAPSCREEN, &vw) != 0){
+	if(swapi_view_create(kSWAPI_VIEW_FULLSCREEN, &vw) != 0){
 		swapi_log_warn("swap create default view fail\n");
 		goto exit_view;
 	}

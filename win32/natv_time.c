@@ -6,7 +6,11 @@
 #include "natv_time.h"
 
 #include "swapi_sys_thread.h"
+#include "swapi_sys_logger.h"
 #include "list.h"
+
+#include <sys/time.h>
+#include <time.h>
 
 #include <windows.h>
 
@@ -95,6 +99,25 @@ int natv_timer_destroy(natv_timer_t timer){
 
 	return 0;
 }
+
+int natv_time_localtime(natv_tm_t *tm){
+	struct timeval	tv;
+
+	ASSERT(tm != NULL);
+
+	if(gettimeofday(&tv, NULL) != 0){
+		swapi_log_warn("getdayoftime return fail!\n");
+		return -1;
+	}
+
+	if(localtime_r(tv.tv_sec, (struct tm*)tm) == NULL){
+		swapi_log_warn("localtime fail!\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 
 int natv_timer_module_init(){
 	natv_timer_win32_t	*ntw = get_timer();
