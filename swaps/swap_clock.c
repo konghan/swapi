@@ -13,6 +13,7 @@
 #include "swapi_sys_logger.h"
 
 #include "native_graphic.h"
+#include "natv_time.h"
 
 #include "list.h"
 
@@ -20,7 +21,7 @@
 #include <cairo/cairo.h>
 
 #define kSWAP_CLOCK_PKG_DIR			"../rootfs/swaps/clock"
-#define kSWAP_CLOCK_FACE			"../rootfs/swaps/clock/clock06.png"
+#define kSWAP_CLOCK_BKGD			"../rootfs/swaps/clock/clock-bkgd03.png"
 #define kMATH_PI					3.1415926
 
 /*
@@ -47,6 +48,21 @@ typedef struct clock_face{
 	clock_face_fini		cf_fini;
 	clock_face_draw		cf_draw;
 
+	// used by analog
+	// clock radis, x,y
+	double				cf_cr;
+	double				cf_cx;
+	double				cf_cy;
+
+	// battery radis, x,y
+	double				cf_br;
+	double				cf_bx;
+	double				cf_by;
+
+	// signal radis, x,y
+	double				cf_sr;
+	double				cf_sx;
+	double				cf_sy;
 }clock_face_t;
 
 static void clock_face_analog_init(clock_face_t *cf, int width, int height, int rgb);
@@ -294,9 +310,12 @@ int swap_clock_fini(){
  * clock face implementations
  */
 static void clock_face_analog_init(clock_face_t *cf, int width, int height, int rgb){
-	cairo_t		*cr;
-	double		rclock, rradio, len;
-	double		cx, cy, rrx, rry, rbx, rby;
+	cairo_t				*cr;
+	cairo_surface_t		*surface;
+	double				rclock, rradio, len;
+	double				cx, cy, rrx, rry, rbx, rby;
+	double				xs, ys, xe, ye;
+	int					i;
 
 	ASSERT(cf != NULL);
 
@@ -313,7 +332,13 @@ static void clock_face_analog_init(clock_face_t *cf, int width, int height, int 
 	}
 
 	// draw background
-	cairo_set_source_rgb(cr, 1, 1, 1);
+	surface = cairo_image_surface_create_from_png(kSWAP_CLOCK_BKGD);
+	if(surface == NULL){
+		swapi_log_warn("analog face load background fail!\n");
+		return ;
+	}
+//	cairo_set_source_rgb(cr, 1, 1, 1);
+	cairo_set_source_surface(cr, surface, 0, 0);
 	cairo_paint(cr);
 
 	// draw clock face
@@ -321,26 +346,62 @@ static void clock_face_analog_init(clock_face_t *cf, int width, int height, int 
 	cx = width / 2;
 	cy = height / 2 + 10;
 	
+	cf->cf_cr = rclock;
+	cf->cf_cx = cx;
+	cf->cf_cy = cy;
+
 	rradio = (sqrt(width*width + height*height) / 2 - rclock) / 2;
 	rrx = rry = rradio;
 
+	cf->cf_sr = rradio;
+	cf->cf_sx = rrx;
+	cf->cf_sy = rry;
+
 	rbx = width - rradio;
 	rby = rry;
-
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	cairo_set_line_width(cr, 1.0);
-
-	cairo_arc(cr, cx, cy, rclock, 0, 2*kMATH_PI);
-	cairo_stroke(cr);
-
-	cairo_arc(cr, cx, cy, 2, 0, 2*kMATH_PI);
-	cairo_fill(cr);
-
+	
+	cf->cf_br = rradio;
+	cf->cf_bx = rbx;
+	cf->cf_by = rby;
+	
+	// draw battery & signal status 
+	cairo_set_source_rgb(cr, 0.2, 0.2, 0.2);
+	cairo_set_line_width(cr, 2.0);
+	
 	cairo_arc(cr, rrx, rry, rradio, 0, 2*kMATH_PI);
 	cairo_stroke(cr);
 
 	cairo_arc(cr, rbx, rby, rradio, 0, 2*kMATH_PI);
 	cairo_stroke(cr);
+
+	// draw clock face
+	cairo_set_source_rgb(cr, 0.2, 0.2, 0.2);
+	cairo_set_line_width(cr, 2.0);
+
+	cairo_arc(cr, cx, cy, rclock, 0, 2*kMATH_PI);
+	cairo_stroke(cr);
+
+	cairo_arc(cr, cx, cy, 3, 0, 2*kMATH_PI);
+	cairo_fill(cr);
+
+	len = rclock - 5;
+	for(i = 0; i < 360; i+= 30){
+		if((i % 90) == 0){
+			cairo_set_line_width(cr, 3.0);
+		}else{
+			cairo_set_line_width(cr, 2.0);
+		}
+
+		xe = rclock * cos(i*kMATH_PI/180) + cx;
+		ye = rclock * sin(i*kMATH_PI/180) + cy;
+
+		xs = len * cos(i*kMATH_PI/180) + cx;
+		ys = len * sin(i*kMATH_PI/180) + cy;
+
+		cairo_move_to(cr, xs, ys);
+		cairo_line_to(cr, xe, ye);
+		cairo_stroke(cr);
+	}
 
 	cairo_destroy(cr);
 }
@@ -351,11 +412,51 @@ static void clock_face_analog_fini(clock_face_t *cf){
 	cairo_surface_destroy(cf->cf_surface);
 }
 
+#define kCLOCK_ANALOG_HOURLEN		30
+#define kCLOCK_ANALOG_MINUTELEN		40
 static void clock_face_analog_draw(clock_face_t *cf, cairo_t *cr){
+	natv_tm_t		tm;
+	double			xs, ys, xe, ye;
+	double			arc;
+
 	ASSERT((cf != NULL) && (cr != NULL));
 
 	cairo_set_source_surface(cr, cf->cf_surface, 0, 0);
 	cairo_paint(cr);
+#if 0
+	if(natv_time_localtime(&tm) != 0){
+		swapi_log_warn("clock analog get localtime fail!\n");
+		return ;
+	}
+#endif
+
+	tm.tm_hour = 4;
+	tm.tm_min = 40;
+	arc = ((double)((tm.tm_hour) % 12) + ((double)tm.tm_min / 60))*30 - 90;
+	swapi_log_info("arc : %x\n", arc);
+	
+	xe = kCLOCK_ANALOG_HOURLEN*cos(arc*kMATH_PI/180) + cf->cf_cx;
+	ye = kCLOCK_ANALOG_HOURLEN*sin(arc*kMATH_PI/180) + cf->cf_cy;
+	xs = 8*cos((180 + arc)*kMATH_PI/180) + cf->cf_cx;
+	ys = 8*sin((180 + arc)*kMATH_PI/180) + cf->cf_cy;
+	cairo_set_source_rgb(cr, 0, 0, 0);
+	cairo_set_line_width(cr, 3.0);
+	cairo_move_to(cr, xs, ys);
+	cairo_line_to(cr, xe, ye);
+	cairo_stroke(cr);
+
+	arc = tm.tm_min * 6 - 90;
+	xe = kCLOCK_ANALOG_MINUTELEN*cos(arc*kMATH_PI/180) + cf->cf_cx;
+	ye = kCLOCK_ANALOG_MINUTELEN*sin(arc*kMATH_PI/180) + cf->cf_cy;
+	xs = 8*cos((180 + arc)*kMATH_PI/180) + cf->cf_cx;
+	ys = 8*sin((180 + arc)*kMATH_PI/180) + cf->cf_cy;
+	cairo_set_source_rgb(cr, 0, 0, 0);
+	cairo_set_line_width(cr, 2.0);
+	cairo_move_to(cr, xs, ys);
+	cairo_line_to(cr, xe, ye);
+	cairo_stroke(cr);
+
+
 }
 
 static void clock_face_digital_init(clock_face_t *cf, int width, int height, int rgb){

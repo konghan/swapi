@@ -102,6 +102,7 @@ int natv_timer_destroy(natv_timer_t timer){
 
 int natv_time_localtime(natv_tm_t *tm){
 	struct timeval	tv;
+	struct tm		*t;
 
 	ASSERT(tm != NULL);
 
@@ -110,11 +111,19 @@ int natv_time_localtime(natv_tm_t *tm){
 		return -1;
 	}
 
+	t = localtime(tv.tv_sec);
+	if(t == NULL){
+		swapi_log_warn("localtime fail!\n");
+		return -1;
+	}
+	memcpy(tm, t, sizeof(natv_tm_t));
+
+#if 0
 	if(localtime_r(tv.tv_sec, (struct tm*)tm) == NULL){
 		swapi_log_warn("localtime fail!\n");
 		return -1;
 	}
-
+#endif
 	return 0;
 }
 
