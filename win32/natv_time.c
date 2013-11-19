@@ -101,17 +101,19 @@ int natv_timer_destroy(natv_timer_t timer){
 }
 
 int natv_time_localtime(natv_tm_t *tm){
-	struct timeval	tv;
+//	struct timeval	tv;
+	time_t			ti;
 	struct tm		*t;
 
 	ASSERT(tm != NULL);
 
-	if(gettimeofday(&tv, NULL) != 0){
-		swapi_log_warn("getdayoftime return fail!\n");
-		return -1;
-	}
+//	if(gettimeofday(&tv, NULL) != 0){
+//		swapi_log_warn("getdayoftime return fail!\n");
+//		return -1;
+//	}
 
-	t = localtime(tv.tv_sec);
+	time(&ti);
+	t = localtime(&ti);
 	if(t == NULL){
 		swapi_log_warn("localtime fail!\n");
 		return -1;
