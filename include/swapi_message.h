@@ -41,7 +41,7 @@ enum swapi_swap_msgtype{
 /*
  * used by keyboard driver
  */
-enum swapi_keydrv_msgtype{
+enum swapi_keydrv_keycode{
 	kNATV_KEYDRV_ENTER = 0,
 	kNATV_KEYDRV_ESCAPE,
 	kNATV_KEYDRV_UP,
@@ -56,6 +56,13 @@ enum swapi_keydrv_msgtype{
 	kNATV_KEYDRV_MESSAGE,
 };
 
+enum swapi_keydrv_msgtype{
+	kNATV_KEY_DOWN = 0,
+	kNATV_KEY_UP,
+	kNATV_KEY_LONGPRESS,
+	kNATV_KEY_MULTIPLE
+};
+
 typedef struct swapi_message{
 	unsigned short		sm_type;
 	unsigned short		sm_size;
@@ -65,6 +72,18 @@ typedef struct swapi_message{
 		unsigned long	sm_data;
 	};
 }swapi_message_t;
+
+static inline void swapi_key_pack(swapi_message_t *msg, int code, int act){
+	msg->sm_type = kSWAPI_MSGTYPE_KEYBOARD;
+	
+	msg->sm_size = (unsigned short)code;
+	msg->sm_sm_data = act;
+}
+
+static inline void swapi_key_unpack(swapi_message_t *msg, int *code, int *act){
+	*code = msg->sm_size;
+	*act  = (int)msg->sm_data;
+}
 
 int swapi_message_module_init();
 int swapi_message_module_fini();
