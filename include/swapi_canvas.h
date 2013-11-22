@@ -22,8 +22,8 @@ typedef struct swapi_canvas{
 	int					sc_height;
 }swapi_canvas_t;
 
-int swapi_canvas_init(struct swapi_window *win, swapi_canvas_t *canvas, int x, int y,
-		int width, int height);
+int swapi_canvas_init(struct swapi_window *win, swapi_canvas_t *canvas,
+		int x, int y, int width, int height);
 int swapi_canvas_fini(swapi_canvas_t *canvas);
 
 #ifdef __cplusplus

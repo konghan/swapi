@@ -15,6 +15,8 @@ enum {
 	kSWAPI_MSGTYPE_SWAP,			// used for swap framework.
 
 	kSWAPI_MSGTYPE_KEYBOARD,
+	kSWAPI_MSGTYPE_DRAW,
+	kSWAPI_MSGTYPE_TOUCH,
 	kSWAPI_MSGTYPE_TIMER,
 	kSWAPI_MSGTYPE_GSENSOR,
 	kSWAPI_MSGTYPE_GPS,
@@ -77,7 +79,7 @@ static inline void swapi_key_pack(swapi_message_t *msg, int code, int act){
 	msg->sm_type = kSWAPI_MSGTYPE_KEYBOARD;
 	
 	msg->sm_size = (unsigned short)code;
-	msg->sm_sm_data = act;
+	msg->sm_data = act;
 }
 
 static inline void swapi_key_unpack(swapi_message_t *msg, int *code, int *act){

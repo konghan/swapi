@@ -3,6 +3,9 @@
  * Distributed under GNU v3 license, see the LICENSE file.
  */
 #include "swapi_surface.h"
+#include "swapi_sys_thread.h"
+
+#include "swapi_sys_logger.h"
 
 #include <cairo/cairo.h>
 
@@ -29,7 +32,7 @@ int swapi_surface_fini(swapi_surface_t *ss){
 	ASSERT(ss != NULL);
 
 	cairo_destroy(ss->ss_cr);
-	cairo_destroy(ss->ss_sf);
+	cairo_surface_destroy(ss->ss_sf);
 
 	return 0;
 }

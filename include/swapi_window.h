@@ -5,7 +5,7 @@
 
 #ifndef __SWAPI_WINDOW_H__
 #define __SWAPI_WINDOW_H__
-
+#include "list.h"
 #include "swapi_message.h"
 #include "swapi_surface.h"
 #include "swapi_widget.h"
@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-struct swapi_window{
+typedef struct swapi_window{
 	swapi_widget_t		sw_wdgt;
 
 	swapi_surface_t		sw_sf;
@@ -32,13 +32,15 @@ struct swapi_window{
 	struct list_head	sw_widgets;
 
 	struct list_head	sw_node;
-};
+}swapi_window_t;
 
 int swapi_window_create(swapi_window_t **win);
 int swapi_window_destroy(swapi_window_t *win);
 
 int swapi_window_invoke(swapi_window_t *win, swapi_message_t *msg);
 int swapi_window_draw(swapi_window_t *win);
+
+void _window_render_rectangle(swapi_window_t *win, int x, int y, int width, int height);
 
 #ifdef __cplusplus
 }

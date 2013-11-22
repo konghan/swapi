@@ -9,7 +9,7 @@
 #include "swapi_queue.h"
 #include "swapi_handler.h"
 
-#include "swapi_window.h"
+#include "swapi_view.h"
 
 #include "swapi_sys_thread.h"
 
@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-#define kSWAPI_SWAP_NAME_LEN			32
+#define kSWAPI_SWAP_NAME_LEN		32
 
 #define kSWAPI_SWAP_TYPE_NATIVE			0x00000001
 #define kSWAPI_SWAP_TYPE_SCRIPT			0x00000002
@@ -39,8 +39,8 @@ typedef struct swapi_swap{
 	swapi_queue_t		*ss_queue;
 	swapi_handler_t		*ss_handler;
 
-	struct list_head	ss_wins;
-	swapi_window_t		*ss_wincur;
+	struct list_head	ss_views;
+	swapi_view_t		*ss_vwcur;
 
 	// link to main loop
 	struct list_head	ss_node;
@@ -72,10 +72,10 @@ int swapi_swap_post(swapi_swap_t *swap, swapi_message_t *msg);
 
 int swapi_swap_add_handler(swapi_swap_t *ss, int type, swapi_handler_entry_t *she);
 
-int swapi_swap_push_window(swapi_swap_t *swap, swapi_view_t *view);
-int swapi_swap_pop_window(swapi_swap_t *swap, swapi_view_t **view);
+int swapi_swap_push_view(swapi_swap_t *swap, swapi_view_t *view);
+int swapi_swap_pop_view(swapi_swap_t *swap, swapi_view_t **view);
 
-swapi_window_t *swapi_swap_top_window(swapi_swap_t *swap);
+swapi_view_t *swapi_swap_topview(swapi_swap_t *swap);
 
 static inline int swapi_swap_status_change(swapi_swap_t *swap, int status){
 	swapi_message_t		msg;

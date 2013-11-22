@@ -4,6 +4,11 @@
  */
 #include "swapi_window.h"
 
+#include "swapi_sys_cache.h"
+#include "swapi_sys_logger.h"
+
+#include "natv_surface.h"
+
 int swapi_window_create(swapi_window_t **win){
 	swapi_window_t			*w;
 	natv_surface_info_t		nsi;
@@ -19,9 +24,9 @@ int swapi_window_create(swapi_window_t **win){
 
 	natv_surface_getinfo(&nsi);
 
-	w->sw_width  = nsi->nsi_width;
-	w->sw_height = nsi->nsi_height;
-	w->sw_rgbtype= nsi->nsi_type;
+	w->sw_width  = nsi.nsi_width;
+	w->sw_height = nsi.nsi_height;
+	w->sw_rgbtype= nsi.nsi_type;
 
 	if(swapi_surface_init(&w->sw_sf, w->sw_width, w->sw_height, w->sw_rgbtype) != 0){
 		swapi_log_warn("window create surface fail!\n");
@@ -35,15 +40,15 @@ int swapi_window_create(swapi_window_t **win){
 
 	swapi_spin_init(&w->sw_lock);
 
-	if(widget_init(w, &w->sw_wdgt, w->sw_width, w->sw_height) != 0){
+	if(_widget_init(w, &w->sw_wdgt, 0, 0, w->sw_width, w->sw_height) != 0){
 		swapi_log_warn("window init widget fail!\n");
 
-		swapi_surface_fini(w->sw_sf);
+		swapi_surface_fini(&w->sw_sf);
 		swapi_heap_free(w);
 		return -1;
 	}
 
-	w->sw_focus = w->sw_wdgt;
+	w->sw_focus = &w->sw_wdgt;
 
 	*win = w;
 
@@ -55,13 +60,13 @@ int swapi_window_destroy(swapi_window_t *win){
 
 	ASSERT(win != NULL);
 
-	list_for_each_entry_safe(pos, temp, win->sw_widgets, sw_node){
+	list_for_each_entry_safe(pos, temp, &win->sw_widgets, sw_node){
 		list_del(&pos->sw_node);
 
-		swapi_widget_destroy(pos);
+		swapi_widget_destroy(win, pos);
 	}
 
-	widget_fini(&win->wdgt);
+	_widget_fini(&win->sw_wdgt);
 
 	swapi_spin_fini(&win->sw_lock);
 
@@ -70,21 +75,23 @@ int swapi_window_destroy(swapi_window_t *win){
 	return 0;
 }
 
-static void window_render_rectangle(swapi_window_t *win, int x, int y, int width, int height){
+void _window_render_rectangle(swapi_window_t *win, int x, int y, int width, int height){
 }
 
-void swapi_window_draw(swapi_window_t *win){
+int swapi_window_draw(swapi_window_t *win){
 	swapi_widget_t		*pos;
 
 	ASSERT(win != NULL);
 
 	swapi_widget_draw(&win->sw_wdgt);
 
-	list_for_each_entry(pos,win->sw_widgets, sw_node){
+	list_for_each_entry(pos, &win->sw_widgets, sw_node){
 		swapi_widget_draw(pos);
 	}
 
-	window_render_rectangle(win, 0, 0, win->sw_width, win->sw_height);
+	_window_render_rectangle(win, 0, 0, win->sw_width, win->sw_height);
+
+	return 0;
 }
 
 int swapi_window_invoke(swapi_window_t *win, swapi_message_t *msg){
@@ -118,7 +125,7 @@ key_proc:
 
 		default:
 			swapi_log_warn("key action unkonw!\n");
-			retunr -1;
+			return -1;
 		}
 
 		if((ret != 0) && (sw != &win->sw_wdgt)){

@@ -14,7 +14,8 @@ TARGET = libswapi.a
 
 common-obj = swapi_message.o swapi_queue.o swapi_handler.o				\
 			 swapi_swap.o swapi_loop.o swapi_shell.o swapi_render.o		\
-			 swapi_view.o swapi.o
+			 swapi_view.o swapi.o										\
+			 swapi_window.o swapi_widget.o swapi_canvas.o swapi_surface.o
 
 win32-obj = swapi_sys_cache.o swapi_sys_logger.o						\
 			natv_time.o natv_io.o natv_cfgsrv.o							\
@@ -22,7 +23,7 @@ win32-obj = swapi_sys_cache.o swapi_sys_logger.o						\
 
 swap-obj = swap_clock.o
 
-vpath %.c ../source ../swaps
+vpath %.c ../source ../widgets ../swaps
 
 .PHONY : clean
  

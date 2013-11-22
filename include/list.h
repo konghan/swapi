@@ -1,11 +1,10 @@
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
+#include "swapi_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define inline __inline
 
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
@@ -139,8 +138,8 @@ static inline void __list_del_entry(struct list_head *entry)
 static inline void list_del(struct list_head *entry)
 {
 	__list_del(entry->prev, entry->next);
-	entry->next = NULL;//LIST_POISON1;
-	entry->prev = NULL;//LIST_POISON2;
+	entry->next = LIST_POISON1;
+	entry->prev = LIST_POISON2;
 }
 #else
 extern void __list_del_entry(struct list_head *entry);
@@ -633,8 +632,8 @@ static inline void __hlist_del(struct hlist_node *n)
 static inline void hlist_del(struct hlist_node *n)
 {
 	__hlist_del(n);
-	n->next = NULL;//LIST_POISON1;
-	n->pprev = NULL;//LIST_POISON2;
+	n->next = LIST_POISON1;
+	n->pprev = LIST_POISON2;
 }
 
 static inline void hlist_del_init(struct hlist_node *n)

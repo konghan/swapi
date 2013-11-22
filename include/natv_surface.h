@@ -6,11 +6,11 @@
 #ifndef __NATV_SURFACE_H__
 #define __NATV_SURFACE_H__
 
-#include "swapi_swui.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct swapi_surface;
 
 typedef struct natv_surface_info{
 	int		nsi_width;
@@ -18,9 +18,9 @@ typedef struct natv_surface_info{
 	int		nsi_type;
 }natv_surface_info_t;
 
-int natve_surface_getinfo(natv_surface_info_t *info);
+int natv_surface_getinfo(natv_surface_info_t *info);
 
-int natv_surface_draw(swapi_surface_t *sf, int x, int y, int width, int height);
+int natv_surface_draw(struct swapi_surface *sf, int x, int y, int width, int height);
 int natv_surface_rendering();
 
 
