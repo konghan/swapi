@@ -2,9 +2,10 @@
  * Copyright (c) 2013, Konghan. All rights reserved.
  * Distributed under GNU v3 license, see the LICENSE file.
  */
-#include "swapi_swui.h"
+#include "swapi_canvas.h"
 
 #include <cairo/cairo.h>
+
 
 int swapi_canvas_init(struct swapi_window *win, swapi_canvas_t *canvas, int x, int y,
 		int width, int height){
@@ -25,11 +26,4 @@ int swapi_canvas_fini(swapi_canvas_t *canvas){
 	// FIXME:cairo surface dec ref
 	return 0;
 }
-
-int swapi_surface_init(swapi_surface_t *sf, int width, int height, int rgbtype){
-}
-
-int swapi_surface_fini(swapi_surface_t *sf){
-}
-
 
