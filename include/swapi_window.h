@@ -5,19 +5,20 @@
 
 #ifndef __SWAPI_WINDOW_H__
 #define __SWAPI_WINDOW_H__
-#include "list.h"
 #include "swapi_message.h"
 #include "swapi_surface.h"
-#include "swapi_widget.h"
+#include "swapi_view.h"
 
 #include "swapi_sys_thread.h"
+
+#include "list.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct swapi_window{
-	swapi_widget_t		sw_wdgt;
+	swapi_view_t		sw_view;
 
 	swapi_surface_t		sw_sf;
 	
@@ -25,7 +26,7 @@ typedef struct swapi_window{
 	int					sw_height;
 	int					sw_rgbtype;
 
-	swapi_widget_t		*sw_focus;
+	swapi_view_t		*sw_focus;
 
 	swapi_spinlock_t	sw_lock;
 
