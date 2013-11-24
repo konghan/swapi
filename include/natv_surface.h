@@ -21,8 +21,8 @@ typedef struct natv_surface_info{
 int natv_surface_getinfo(natv_surface_info_t *info);
 
 int natv_surface_draw(struct swapi_surface *sf, int x, int y, int width, int height);
-int natv_surface_rendering();
 
+int natv_surface_renter_to_device();
 
 int natv_surface_module_init();
 int natv_surface_module_fini();

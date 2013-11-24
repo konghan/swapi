@@ -3,21 +3,21 @@
  * Distributed under the BSD license, see the LICENSE file.
  */
 
-#ifndef __NATIVE_LOGGER_H__
-#define __NATIVE_LOGGER_H__
+#ifndef __NATV_LOGGER_H__
+#define __NATV_LOGGER_H__
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int native_logger_output(const char *log, int size);
+int natv_logger_output(const char *log, int size);
 
-int native_logger_init();
-int native_logger_fini();
+int natv_logger_init();
+int natv_logger_fini();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //__NATIVE_LOGGER_H__
+#endif //__NATV_LOGGER_H__

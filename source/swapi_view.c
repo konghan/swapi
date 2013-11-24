@@ -1,135 +1,119 @@
 /*
  * Copyright (c) 2013, Konghan. All rights reserved.
- * Distributed under the BSD license, see the LICENSE file.
+ * Distributed under GNU v3 license, see the LICENSE file.
  */
-
 #include "swapi_view.h"
-#include "swapi_handler.h"
-#include "swapi_shell.h"
+#include "swapi_window.h"
 
-#include "swapi_sys_logger.h"
+#include "natv_surface.h"
+
 #include "swapi_sys_cache.h"
+#include "swapi_sys_logger.h"
 
-#include "native_graphic.h"
 
-#include <cairo/cairo.h>
-
-cairo_t *swapi_view_get_cairo(swapi_view_t *sv){
-	return sv->sv_cairo;
+static void view_default_on_draw(swapi_view_t *sw, swapi_canvas_t *sc){
 }
 
-cairo_surface_t *swapi_view_get_surface(swapi_view_t *sv){
-	return sv->sv_surface;
+static int view_default_on_key_down(swapi_view_t *sw, int key){
+	return 1;
 }
 
-int swapi_view_get_width(swapi_view_t *sv){
-	return sv->sv_width;
+static int view_default_on_key_up(swapi_view_t *sw, int key){
+	return 1;
 }
 
-int swapi_view_get_height(swapi_view_t *sv){
-	return sv->sv_height;
+static int view_default_on_key_multiple(swapi_view_t *sw, int key){
+	return 1;
 }
 
-int swapi_view_is_fullscreen(swapi_view_t *sv){
-	return sv->sv_type == kSWAPI_VIEW_FULLSCREEN;
+static int view_default_on_key_longpress(swapi_view_t *sw, int key){
+	return 1;
 }
 
-swapi_handler_t *swapi_view_get_handler(swapi_view_t *sv){
-	return sv->sv_handlers;
+static int view_default_on_touch(swapi_view_t *sw, int motion){
+	return 1;
 }
 
-int swapi_view_add_handler(swapi_view_t *sv, int type, swapi_handler_entry_t *she){
-	return swapi_handler_add(sv->sv_handlers, type, she);
+static void view_default_on_focus(swapi_view_t *sw, int focus){
+	return ;
 }
 
-int swapi_view_create(int fullscreen, swapi_view_t **sv){
-	swapi_view_t			*v;
-	native_graphic_info_t	ngi;
-	int						h,w;
+int _view_init(swapi_window_t *win, swapi_view_t *sw, int x, int y,
+		int width, int height){
+	ASSERT((win != NULL) && (sw != NULL));
 
-	ASSERT(sv != NULL);
-	
-	native_graphic_getinfo(&ngi);
-	switch(fullscreen){
-		case kSWAPI_VIEW_FULLSCREEN:
-			h = ngi.ngi_height;
-			w = ngi.ngi_width;
-			break;
-		case kSWAPI_VIEW_SWAPSCREEN:
-			h = ngi.ngi_height - kSWAPI_SHELL_HEIGHT;
-			w = ngi.ngi_width;
-			break;
+	sw->sv_win = win;
+	INIT_LIST_HEAD(&sw->sv_node);
 
-		default:
-			return -EINVAL;
-	}
+	swapi_canvas_init(win, &sw->sv_canvas, x, y, width, height);
 
+	sw->sv_x = x;
+	sw->sv_y = y;
+	sw->sv_width = width;
+	sw->sv_height = height;
 
-	v = swapi_heap_alloc(sizeof(swapi_view_t));
-	if(v == NULL){
-		swapi_log_warn("create view fail: no more memory\n");
+	sw->on_draw = view_default_on_draw;
+
+	sw->on_key_down		 = view_default_on_key_down;
+	sw->on_key_up		 = view_default_on_key_up;
+	sw->on_key_multiple  = view_default_on_key_multiple;
+	sw->on_key_longpress = view_default_on_key_longpress;
+
+	sw->on_touch = view_default_on_touch;
+	sw->on_focus = view_default_on_focus;
+
+	return 0;
+}
+
+int _view_fini(swapi_view_t *sw){
+	swapi_canvas_fini(&sw->sv_canvas);
+	return 0;
+}
+
+int swapi_view_create(swapi_window_t *win, int x, int y, int width, int height,
+		swapi_view_t **sw){
+	swapi_view_t	*wg;
+
+	ASSERT((win != NULL) && (sw != NULL));
+
+	wg = swapi_heap_alloc(sizeof(*wg));
+	if(wg == NULL){
+		swapi_log_warn("alloc memory for view fail!\n");
 		return -ENOMEM;
 	}
-	memset(v, 0, sizeof(swapi_view_t));
-
-	v->sv_surface = cairo_image_surface_create(ngi.ngi_rgbtype, w, h);
-	if(v->sv_surface == NULL){
-		swapi_log_warn("create surface fail!\n");
-		goto exit_surface;
-	}
-
-	v->sv_cairo = cairo_create(v->sv_surface);
-	if(v->sv_cairo == NULL){
-		swapi_log_warn("create cairo fail!\n");
-		goto exit_cairo;
-	}
-
-	v->sv_width = w;
-	v->sv_height = h;
-	INIT_LIST_HEAD(&v->sv_node);
-
-	if(swapi_handler_create(kSWAPI_HANDLER_DEFAULT_SLOTS, &v->sv_handlers) != 0){
-		swapi_log_warn("create handler fail!\n");
-		goto exit_handler;
-	}
-
-	v->sv_type = fullscreen;
-	*sv = v;
-
-	return 0;
-
-exit_handler:
-	cairo_destroy(v->sv_cairo);
 	
-exit_cairo:
-	cairo_surface_destroy(v->sv_surface);
+	_view_init(win, wg, x, y, width, height);
 
-exit_surface:
-	swapi_heap_free(v);
+	swapi_spin_lock(&win->sv_lock);
+	// FIXME: sort in location
+	list_add_tail(&wg->sv_node, &win->sv_views);
+	swapi_spin_unlock(&win->sv_lock);
 
-	return -1;
-}
-
-int swapi_view_destroy(swapi_view_t *sv){
-	
-	ASSERT(sv != NULL);
-
-	list_del(&sv->sv_node);
-	swapi_handler_destroy(sv->sv_handlers);
-
-	cairo_destroy(sv->sv_cairo);
-	cairo_surface_destroy(sv->sv_surface);
-	
-	swapi_heap_free(sv);
+	*sw = wg;
 
 	return 0;
 }
 
-int swapi_view_module_init(){
+int swapi_view_destroy(swapi_window_t *win, swapi_view_t *sw){
+	ASSERT(sw != NULL);
+
+	swapi_spin_lock(&win->sv_lock);
+	list_del(&sw->sv_node);
+	swapi_spin_unlock(&win->sv_lock);
+
+	_view_fini(sw);
+
+	swapi_heap_free(sw);
+
 	return 0;
 }
 
-int swapi_view_module_fini(){
-	return 0;
+void swapi_view_draw(swapi_view_t *sw){
+	ASSERT(sw != NULL);
+
+	sw->on_draw(sw, &sw->sv_canvas);
+
+	_window_render_rectangle(sw->sv_win, sw->sv_x, sw->sv_y, sw->sv_width, sw->sv_height);
 }
+
 

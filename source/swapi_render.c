@@ -5,8 +5,7 @@
 
 #include "swapi_render.h"
 
-#include "swapi_shell.h"
-#include "swapi_view.h"
+#include "swapi_window.h"
 #include "swapi_swap.h"
 #include "swapi_loop.h"
 

@@ -11,7 +11,7 @@
 
 
 #include "swapi_sys_logger.h"
-#include "native_logger.h"
+#include "natv_logger.h"
 
 typedef struct swapi_logger{
     int		    log_init;
@@ -57,7 +57,7 @@ int swapi_logger_print(int level, char *fmt, ...){
     size += _vsnprintf(buf+size, SWAPI_LOGGER_MAX_BUF-size, fmt, args);
     va_end(args);
 
-	return native_logger_output(buf, size);
+	return natv_logger_output(buf, size);
 }
 
 int swapi_log_module_init(){

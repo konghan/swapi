@@ -72,8 +72,8 @@ int swapi_swap_post(swapi_swap_t *swap, swapi_message_t *msg);
 
 int swapi_swap_add_handler(swapi_swap_t *ss, int type, swapi_handler_entry_t *she);
 
-int swapi_swap_push_window(swapi_swap_t *swap, swapi_view_t *view);
-int swapi_swap_pop_window(swapi_swap_t *swap, swapi_view_t **view);
+int swapi_swap_push_window(swapi_swap_t *swap, swapi_window_t *win);
+int swapi_swap_pop_window(swapi_swap_t *swap, swapi_window_t **win);
 
 swapi_window_t *swapi_swap_top_window(swapi_swap_t *swap);
 
