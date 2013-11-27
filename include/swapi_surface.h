@@ -15,9 +15,10 @@ extern "C" {
 typedef struct swapi_surface{
 	cairo_surface_t		*ss_sf;
 	cairo_t				*ss_cr;
+
 }swapi_surface_t;
 
-int swapi_surface_init(swapi_surface_t *sf, int width, int height, int rgbtype);
+int swapi_surface_init(swapi_surface_t *sf, int width, int height, int format);
 int swapi_surface_fini(swapi_surface_t *sf);
 
 #ifdef __cplusplus

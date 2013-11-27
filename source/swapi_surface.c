@@ -9,10 +9,10 @@
 
 #include <cairo/cairo.h>
 
-int swapi_surface_init(swapi_surface_t *ss, int width, int height, int rgbtype){
+int swapi_surface_init(swapi_surface_t *ss, int width, int height, int format){
 	ASSERT(ss != NULL);
 
-	ss->ss_sf = cairo_image_surface_create(rgbtype, width, height);
+	ss->ss_sf = cairo_image_surface_create(format, width, height);
 	if(ss->ss_sf == NULL){
 		swapi_log_warn("create image surface fail!\n");
 		return -1;
@@ -36,4 +36,5 @@ int swapi_surface_fini(swapi_surface_t *ss){
 
 	return 0;
 }
+
 

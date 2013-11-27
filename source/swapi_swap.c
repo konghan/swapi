@@ -77,7 +77,6 @@ static int swapi_swap_on_draw(swapi_message_t *msg, void *data){
 static int swapi_swap_thread_routine(void *p){
 	swapi_swap_t		*ss = (swapi_swap_t *)p;
 	swapi_window_t		*pos, *win;
-	swapi_handler_t		*handler;
 	swapi_message_t		msg;
 
 	ASSERT(ss != NULL);
@@ -95,7 +94,7 @@ static int swapi_swap_thread_routine(void *p){
 
 	// FIXME: free app's resource
 	
-	list_for_each_entry_safe(pos, vw, &ss->ss_wins, sv_node){
+	list_for_each_entry_safe(pos, win, &ss->ss_wins, sw_node){
 		swapi_window_destroy(win);
 	}
 	
@@ -139,7 +138,7 @@ int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **sw
 		goto exit_spin;
 	}
 
-	INIT_LIST_HEAD(&ss->ss_views);
+	INIT_LIST_HEAD(&ss->ss_wins);
 	INIT_LIST_HEAD(&ss->ss_node);
 	strncpy(ss->ss_name, name, kSWAPI_SWAP_NAME_LEN-1);
 	ss->ss_cbs = cbs;
@@ -176,7 +175,7 @@ int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **sw
 	return 0;
 
 exit_thread:
-	swapi_view_destroy(vw);
+	swapi_window_destroy(win);
 
 exit_window:
 	swapi_spin_fini(&ss->ss_lock);
@@ -209,11 +208,10 @@ int swapi_swap_post(swapi_swap_t *ss, swapi_message_t *msg){
 }
 
 int swapi_swap_push_window(swapi_swap_t *swap, swapi_window_t *win){
-	ASSERT(swap != NULL);
-	ASSERT(view != NULL);
+	ASSERT((swap != NULL) && (win != NULL));
 
 	swapi_spin_lock(&swap->ss_lock);
-	list_add(&win->sw_node, &swap->ss_views);
+	list_add(&win->sw_node, &swap->ss_wins);
 	swapi_spin_unlock(&swap->ss_lock);
 
 	swap->ss_wincur = win;

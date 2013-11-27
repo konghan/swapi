@@ -13,7 +13,7 @@ LIBS =
 TARGET = libswapi.a
 
 common-obj = swapi_message.o swapi_queue.o swapi_handler.o				\
-			 swapi_swap.o swapi_loop.o swapi_render.o					\
+			 swapi_swap.o swapi_loop.o									\
 			 swapi_window.o swapi_view.o swapi_canvas.o swapi_surface.o \
 			 swapi.o
 

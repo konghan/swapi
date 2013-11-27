@@ -26,29 +26,30 @@ int swapi_window_create(swapi_window_t **win){
 
 	w->sw_width  = nsi.nsi_width;
 	w->sw_height = nsi.nsi_height;
-	w->sw_rgbtype= nsi.nsi_type;
+	w->sw_format = nsi.nsi_type;
 
-	if(swapi_surface_init(&w->sw_sf, w->sw_width, w->sw_height, w->sw_rgbtype) != 0){
-		swapi_log_warn("window create surface fail!\n");
+	if(_canvas_init(NULL, &w->sw_canvas, 0, 0, w->sw_width, w->sw_height,
+				w->sw_format) != 0){
+		swapi_log_warn("window create canvas fail!\n");
 		
 		swapi_heap_free(w);
 		return -1;
 	}
 	
-	INIT_LIST_HEAD(&w->sw_widgets);
+	INIT_LIST_HEAD(&w->sw_views);
 	INIT_LIST_HEAD(&w->sw_node);
 
 	swapi_spin_init(&w->sw_lock);
 
-	if(_widget_init(w, &w->sw_wdgt, 0, 0, w->sw_width, w->sw_height) != 0){
-		swapi_log_warn("window init widget fail!\n");
+	if(_view_init(w, &w->sw_view, 0, 0, w->sw_width, w->sw_height) != 0){
+		swapi_log_warn("window init view fail!\n");
 
-		swapi_surface_fini(&w->sw_sf);
+		_canvas_fini(&w->sw_canvas);
 		swapi_heap_free(w);
 		return -1;
 	}
 
-	w->sw_focus = &w->sw_wdgt;
+	w->sw_focus = &w->sw_view;
 
 	*win = w;
 
@@ -56,17 +57,19 @@ int swapi_window_create(swapi_window_t **win){
 }
 
 int swapi_window_destroy(swapi_window_t *win){
-	swapi_widget_t		*pos, *temp;
+	swapi_view_t		*pos, *temp;
 
 	ASSERT(win != NULL);
 
-	list_for_each_entry_safe(pos, temp, &win->sw_widgets, sw_node){
-		list_del(&pos->sw_node);
+	list_for_each_entry_safe(pos, temp, &win->sw_views, sv_node){
+		list_del(&pos->sv_node);
 
-		swapi_widget_destroy(win, pos);
+		swapi_view_destroy(pos);
 	}
 
-	_widget_fini(&win->sw_wdgt);
+	_view_fini(&win->sw_view);
+
+	_canvas_fini(&win->sw_canvas);
 
 	swapi_spin_fini(&win->sw_lock);
 
@@ -76,17 +79,24 @@ int swapi_window_destroy(swapi_window_t *win){
 }
 
 void _window_render_rectangle(swapi_window_t *win, int x, int y, int width, int height){
-}
-
-int swapi_window_draw(swapi_window_t *win){
-	swapi_widget_t		*pos;
+	swapi_surface_t *sf;
 
 	ASSERT(win != NULL);
 
-	swapi_widget_draw(&win->sw_wdgt);
+	sf = _canvas_get_surface(&win->sw_canvas);
 
-	list_for_each_entry(pos, &win->sw_widgets, sw_node){
-		swapi_widget_draw(pos);
+	natv_surface_draw(sf, x, y, width, height);
+}
+
+int swapi_window_draw(swapi_window_t *win){
+	swapi_view_t		*pos;
+
+	ASSERT(win != NULL);
+
+	swapi_view_draw(&win->sw_view);
+
+	list_for_each_entry(pos, &win->sw_views, sv_node){
+		swapi_view_draw(pos);
 	}
 
 	_window_render_rectangle(win, 0, 0, win->sw_width, win->sw_height);
@@ -95,7 +105,7 @@ int swapi_window_draw(swapi_window_t *win){
 }
 
 int swapi_window_invoke(swapi_window_t *win, swapi_message_t *msg){
-	swapi_widget_t		*sw;
+	swapi_view_t		*sw;
 	int					kcode, kact;
 	int					ret = 0;
 
@@ -128,8 +138,9 @@ key_proc:
 			return -1;
 		}
 
-		if((ret != 0) && (sw != &win->sw_wdgt)){
-			sw = &win->sw_wdgt;
+		// if no view process key message, re-invoke to default view.
+		if((ret != 0) && (sw != &win->sw_view)){
+			sw = &win->sw_view;
 			goto key_proc;
 		}
 		return 0;

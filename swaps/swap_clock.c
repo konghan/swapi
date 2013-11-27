@@ -5,25 +5,22 @@
 
 #include "swap_clock.h"
 
-#include "swapi_view.h"
 #include "swapi_swap.h"
-#include "swapi_render.h"
+#include "swapi_canvas.h"
 
 #include "swapi_sys_thread.h"
 #include "swapi_sys_logger.h"
 
-#include "native_graphic.h"
 #include "natv_time.h"
 #include "natv_hwdrv.h"
+#include "natv_surface.h"
 
 #include "list.h"
 
 #include <math.h>
-#include <cairo/cairo.h>
 
 #define kSWAP_CLOCK_PKG_DIR			"../rootfs/swaps/clock"
 #define kSWAP_CLOCK_BKGD			"../rootfs/swaps/clock/clock-bkgd03.png"
-#define kMATH_PI					3.1415926
 
 /*
  * clock face relative decl.
@@ -31,7 +28,7 @@
 struct clock_face;
 typedef void (*clock_face_init)(struct clock_face *cf, int width, int height, int rgb);
 typedef void (*clock_face_fini)(struct clock_face *cf);
-typedef void (*clock_face_draw)(struct clock_face *cf, cairo_t *cr);
+typedef void (*clock_face_draw)(struct clock_face *cf, swapi_view_t *view);
 
 enum {
 	kCLOCK_FACE_ANALOG = 0,
@@ -43,7 +40,8 @@ enum {
 typedef struct clock_face{
 	int					cf_id;
 	struct list_head	cf_node;
-	cairo_surface_t		*cf_surface;
+
+	swapi_canvas_t		*cf_cvs;
 
 	clock_face_init		cf_init;
 	clock_face_fini		cf_fini;
@@ -66,32 +64,30 @@ typedef struct clock_face{
 	double				cf_sy;
 }clock_face_t;
 
-static void clock_face_analog_init(clock_face_t *cf, int width, int height, int rgb);
+static void clock_face_analog_init(clock_face_t *cf, int width, int height, int format);
 static void clock_face_analog_fini(clock_face_t *cf);
-static void clock_face_analog_draw(clock_face_t *cf, cairo_t *cr);
+static void clock_face_analog_draw(clock_face_t *cf, swapi_view_t *view);
 
-static void clock_face_digital_init(clock_face_t *cf, int width, int height, int rgb);
-static void clock_face_digital_fini(clock_face_t *cf);
-static void clock_face_digital_draw(clock_face_t *cf, cairo_t *cr);
+static void clock_face_digital_init(clock_face_t *cf, int width, int height, int format){
+}
+static void clock_face_digital_fini(clock_face_t *cf){}
+static void clock_face_digital_draw(clock_face_t *cf, swapi_view_t *view){}
 
-static void clock_face_photo_init(clock_face_t *cf, int width, int height, int rgb);
+static void clock_face_photo_init(clock_face_t *cf, int width, int height, int format);
 static void clock_face_photo_fini(clock_face_t *cf);
-static void clock_face_photo_draw(clock_face_t *cf, cairo_t *cr);
+static void clock_face_photo_draw(clock_face_t *cf, swapi_view_t *view);
 
 static clock_face_t	__gs_faces[] = {
-	{.cf_id = kCLOCK_FACE_ANALOG, .cf_node = {},  .cf_surface = NULL,
-		.cf_init = clock_face_analog_init, .cf_fini = clock_face_analog_fini,
-		.cf_draw = clock_face_analog_draw },
+	{.cf_id = kCLOCK_FACE_ANALOG, .cf_init = clock_face_analog_init,
+		.cf_fini = clock_face_analog_fini, .cf_draw = clock_face_analog_draw },
 
-	{.cf_id = kCLOCK_FACE_DIGITAL, .cf_node = {},  .cf_surface = NULL,
-		.cf_init = clock_face_digital_init, .cf_fini = clock_face_digital_fini,
-		.cf_draw = clock_face_digital_draw },
+	{.cf_id = kCLOCK_FACE_DIGITAL, .cf_init = clock_face_digital_init,
+		.cf_fini = clock_face_digital_fini, .cf_draw = clock_face_digital_draw },
 
-	{.cf_id = kCLOCK_FACE_PHOTO, .cf_node = {},  .cf_surface = NULL,
-		.cf_init = clock_face_photo_init, .cf_fini = clock_face_photo_fini,
-		.cf_draw = clock_face_photo_draw },
+	{.cf_id = kCLOCK_FACE_PHOTO, .cf_init = clock_face_photo_init,
+		.cf_fini = clock_face_photo_fini, .cf_draw = clock_face_photo_draw },
 
-	{.cf_id = kCLOCK_FACE_END, .cf_node = {},  .cf_surface = NULL }
+	{.cf_id = kCLOCK_FACE_END }
 };
 
 static inline clock_face_t *get_face(){
@@ -159,21 +155,19 @@ static inline swapi_handler_entry_t *get_handler(){
  * implementation of main body
  */
 static void clock_draw(swap_clock_t *sc){
-	cairo_t				*cr;
-	swapi_view_t		*sv;
+	swapi_window_t		*sw;
 
 	ASSERT((sc != NULL) && (sc->sc_cur != NULL) && (sc->sc_swap != NULL));
 
-	sv = swapi_swap_topview(sc->sc_swap);
-	if(sv == NULL){
+	sw = swapi_swap_top_window(sc->sc_swap);
+	if(sw == NULL){
 		swapi_log_warn("clock swap without view!\n");
 		return ;
 	}
 
-	cr = swapi_view_get_cairo(sv);
-	sc->sc_cur->cf_draw(sc->sc_cur, cr);
+	sc->sc_cur->cf_draw(sc->sc_cur, swapi_window_get_view(sw));
 
-	swapi_render_flush(kSWAPI_RENDER_SWAP_UPDATE);
+	swapi_window_draw(sw);
 }
 
 static int clock_on_timer(swapi_message_t *msg, void *data){
@@ -192,7 +186,7 @@ static int clock_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	clock_face_t			*cf = get_face();
 
 	swap_clock_t			*sc;
-	native_graphic_info_t	ngi;
+	natv_surface_info_t		nsi;
 
 	sc = (swap_clock_t *)swapi_swap_get(sw);
 	if(sc == NULL){
@@ -208,11 +202,11 @@ static int clock_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	}
 
 	// init clock face
-	native_graphic_getinfo(&ngi);
+	natv_surface_getinfo(&nsi);
 	while(cf->cf_id != kCLOCK_FACE_END){
 		INIT_LIST_HEAD(&cf->cf_node);
 
-		cf->cf_init(cf, ngi.ngi_width, ngi.ngi_height, ngi.ngi_rgbtype);
+		cf->cf_init(cf, nsi.nsi_width, nsi.nsi_height, nsi.nsi_type);
 
 		swapi_spin_lock(&sc->sc_lock);
 		list_add_tail(&cf->cf_node, &sc->sc_faces);
@@ -222,7 +216,9 @@ static int clock_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	}
 
 	sc->sc_cur = get_face();
-	sc->sc_cur ++;
+//	sc->sc_cur ++;
+
+	clock_draw(sc);
 
 	return 0;
 }
@@ -311,37 +307,21 @@ int swap_clock_fini(){
 /*
  * clock face implementations
  */
-static void clock_face_analog_init(clock_face_t *cf, int width, int height, int rgb){
-	cairo_t				*cr;
-	cairo_surface_t		*surface;
-	double				rclock, rradio, len;
-	double				cx, cy, rrx, rry, rbx, rby;
-	double				xs, ys, xe, ye;
+static void clock_face_analog_init(clock_face_t *cf, int width, int height, int format){
+	float				rclock, rradio, len;
+	float				cx, cy, rrx, rry, rbx, rby;
+	float				xs, ys, xe, ye;
 	int					i;
 
 	ASSERT(cf != NULL);
 
-	cf->cf_surface = cairo_image_surface_create(rgb, width, height);
-	if(cf->cf_surface == NULL){
-		swapi_log_warn("analog face create surface fail!\n");
+	if(swapi_canvas_create_image(width, height, format, &cf->cf_cvs) != 0){
+		swapi_log_warn("analog face create backgroud canvas fail!\n");
 		return ;
 	}
 	
-	cr = cairo_create(cf->cf_surface);
-	if(cf == NULL){
-		swapi_log_warn("analog face create cairo context fail!\n");
-		return ;
-	}
-
 	// draw background
-	surface = cairo_image_surface_create_from_png(kSWAP_CLOCK_BKGD);
-	if(surface == NULL){
-		swapi_log_warn("analog face load background fail!\n");
-		return ;
-	}
-//	cairo_set_source_rgb(cr, 1, 1, 1);
-	cairo_set_source_surface(cr, surface, 0, 0);
-	cairo_paint(cr);
+	swapi_canvas_draw_color(cf->cf_cvs, 255, 224, 224, 255);
 
 	// draw clock face
 	rclock = ((width >= height) ? height : width) / 2 - 10;
@@ -367,49 +347,49 @@ static void clock_face_analog_init(clock_face_t *cf, int width, int height, int 
 	cf->cf_by = rby;
 	
 	// draw battery & signal
-	cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.6);
-	cairo_set_line_width(cr, 3.0);
+	swapi_canvas_set_color(cf->cf_cvs, 100, 100, 100, 140);
+	swapi_canvas_set_line(cf->cf_cvs, 3);
 	
-	cairo_arc(cr, rrx, rry, rradio - 2, 0, 2*kMATH_PI);
-	cairo_stroke(cr);
+	swapi_canvas_draw_arc(cf->cf_cvs, rrx, rry, rradio - 2, 0, 2*kMATH_PI);
+	swapi_canvas_stroke(cf->cf_cvs);
 
-	cairo_arc(cr, rbx, rby, rradio - 2, 0, 2*kMATH_PI);
-	cairo_stroke(cr);
+	swapi_canvas_draw_arc(cf->cf_cvs, rbx, rby, rradio - 2, 0, 2*kMATH_PI);
+	swapi_canvas_stroke(cf->cf_cvs);
 
 	// draw red line
-	cairo_set_source_rgba(cr, 1, 0, 0, 0.4);
-	cairo_arc(cr, rrx, rry, rradio - 2, -225*kMATH_PI/180, -165*kMATH_PI/180);
-	cairo_stroke(cr);
-	cairo_arc(cr, rbx, rby, rradio - 2, -15*kMATH_PI/180, 45*kMATH_PI/180);
-	cairo_stroke(cr);
+	swapi_canvas_set_color(cf->cf_cvs, 255, 0, 0, 100);
+	swapi_canvas_draw_arc(cf->cf_cvs, rrx, rry, rradio - 2, -225*kMATH_PI/180, -165*kMATH_PI/180);
+	swapi_canvas_stroke(cf->cf_cvs);
+	swapi_canvas_draw_arc(cf->cf_cvs, rbx, rby, rradio - 2, -15*kMATH_PI/180, 45*kMATH_PI/180);
+	swapi_canvas_stroke(cf->cf_cvs);
 	
 	// draw yellow line
-	cairo_set_source_rgba(cr, 1, 1, 0, 0.4);
-	cairo_arc(cr, rrx, rry, rradio - 2, -165*kMATH_PI/180, -105*kMATH_PI/180);
-	cairo_stroke(cr);
-	cairo_arc(cr, rbx, rby, rradio - 2, -75*kMATH_PI/180, -15*kMATH_PI/180);
-	cairo_stroke(cr);
+	swapi_canvas_set_color(cf->cf_cvs, 255, 255, 0, 100);
+	swapi_canvas_draw_arc(cf->cf_cvs, rrx, rry, rradio - 2, -165*kMATH_PI/180, -105*kMATH_PI/180);
+	swapi_canvas_stroke(cf->cf_cvs);
+	swapi_canvas_draw_arc(cf->cf_cvs, rbx, rby, rradio - 2, -75*kMATH_PI/180, -15*kMATH_PI/180);
+	swapi_canvas_stroke(cf->cf_cvs);
 
 	// draw green line
-	cairo_set_source_rgba(cr, 0, 1, 0, 0.4);
-	cairo_arc(cr, rrx, rry, rradio - 2, -105*kMATH_PI/180, -45*kMATH_PI/180);
-	cairo_stroke(cr);
-	cairo_arc(cr, rbx, rby, rradio - 2, -135*kMATH_PI/180, -75*kMATH_PI/180);
-	cairo_stroke(cr);
+	swapi_canvas_set_color(cf->cf_cvs, 0, 255, 0, 100);
+	swapi_canvas_draw_arc(cf->cf_cvs, rrx, rry, rradio - 2, -105*kMATH_PI/180, -45*kMATH_PI/180);
+	swapi_canvas_stroke(cf->cf_cvs);
+	swapi_canvas_draw_arc(cf->cf_cvs, rbx, rby, rradio - 2, -135*kMATH_PI/180, -75*kMATH_PI/180);
+	swapi_canvas_stroke(cf->cf_cvs);
 
 	// draw clock face
-	cairo_set_source_rgba(cr, 0.1, 0.1, 0.1, 0.6);
-	cairo_set_line_width(cr, 3.0);
+	swapi_canvas_set_color(cf->cf_cvs, 25, 25, 26, 140);
+	swapi_canvas_set_line(cf->cf_cvs, 3);
 
-	cairo_arc(cr, cx, cy, rclock - 1, 0, 2*kMATH_PI);
-	cairo_stroke(cr);
+	swapi_canvas_draw_arc(cf->cf_cvs, cx, cy, rclock - 1, 0, 2*kMATH_PI);
+	swapi_canvas_stroke(cf->cf_cvs);
 
 	len = rclock - 5;
 	for(i = 0; i < 360; i+= 30){
 		if((i % 90) == 0){
-			cairo_set_line_width(cr, 3.0);
+			swapi_canvas_set_line(cf->cf_cvs, 3);
 		}else{
-			cairo_set_line_width(cr, 2.0);
+			swapi_canvas_set_line(cf->cf_cvs, 2);
 		}
 
 		xe = rclock * cos(i*kMATH_PI/180) + cx;
@@ -418,33 +398,31 @@ static void clock_face_analog_init(clock_face_t *cf, int width, int height, int 
 		xs = len * cos(i*kMATH_PI/180) + cx;
 		ys = len * sin(i*kMATH_PI/180) + cy;
 
-		cairo_move_to(cr, xs, ys);
-		cairo_line_to(cr, xe, ye);
-		cairo_stroke(cr);
+		swapi_canvas_draw_line(cf->cf_cvs, xs, ys, xe, ye);
+		swapi_canvas_stroke(cf->cf_cvs);
 	}
-
-	cairo_destroy(cr);
 }
 
 static void clock_face_analog_fini(clock_face_t *cf){
 	ASSERT(cf != NULL);
 	
-	cairo_surface_destroy(cf->cf_surface);
+	swapi_canvas_destroy(cf->cf_cvs);
 }
 
 #define kCLOCK_ANALOG_HOURLEN		30
 #define kCLOCK_ANALOG_MINUTELEN		40
 #define kCLOCK_ANALOG_BATTERY		12
 #define kCLOCK_ANALOG_SIGNAL		12
-static void clock_face_analog_draw(clock_face_t *cf, cairo_t *cr){
+static void clock_face_analog_draw(clock_face_t *cf, swapi_view_t *sv){
 	natv_tm_t		tm;
-	double			xs, ys, xe, ye;
-	double			arc;
+	swapi_canvas_t	*cvs;
+	float			xs, ys, xe, ye;
+	float			arc;
 
-	ASSERT((cf != NULL) && (cr != NULL));
+	ASSERT((cf != NULL) && (sv != NULL));
 
-	cairo_set_source_surface(cr, cf->cf_surface, 0, 0);
-	cairo_paint(cr);
+	cvs = swapi_view_get_canvas(sv);
+	swapi_canvas_draw_canvas(cvs, 0, 0, cf->cf_cvs);
 
 	if(natv_time_localtime(&tm) != 0){
 		swapi_log_warn("clock analog get localtime fail!\n");
@@ -454,17 +432,17 @@ static void clock_face_analog_draw(clock_face_t *cf, cairo_t *cr){
 			tm.tm_mday, tm.tm_hour, tm.tm_min);
 
 	// draw hour
-	cairo_set_source_rgb(cr, 1, 1, 1);
+	swapi_canvas_set_color(cvs, 0, 0, 0, 255);
 
 	arc = ((double)((tm.tm_hour) % 12) + ((double)tm.tm_min / 60))*30 - 90;
 	xe = kCLOCK_ANALOG_HOURLEN*cos(arc*kMATH_PI/180) + cf->cf_cx;
 	ye = kCLOCK_ANALOG_HOURLEN*sin(arc*kMATH_PI/180) + cf->cf_cy;
 	xs = 8*cos((180 + arc)*kMATH_PI/180) + cf->cf_cx;
 	ys = 8*sin((180 + arc)*kMATH_PI/180) + cf->cf_cy;
-	cairo_set_line_width(cr, 3.0);
-	cairo_move_to(cr, xs, ys);
-	cairo_line_to(cr, xe, ye);
-	cairo_stroke(cr);
+	
+	swapi_canvas_set_line(cvs, 3);
+	swapi_canvas_draw_line(cvs, xs, ys, xe, ye);
+	swapi_canvas_stroke(cvs);
 
 	// draw minute
 	arc = tm.tm_min * 6 - 90;
@@ -472,15 +450,15 @@ static void clock_face_analog_draw(clock_face_t *cf, cairo_t *cr){
 	ye = kCLOCK_ANALOG_MINUTELEN*sin(arc*kMATH_PI/180) + cf->cf_cy;
 	xs = 8*cos((180 + arc)*kMATH_PI/180) + cf->cf_cx;
 	ys = 8*sin((180 + arc)*kMATH_PI/180) + cf->cf_cy;
-	cairo_set_line_width(cr, 2.0);
-	cairo_move_to(cr, xs, ys);
-	cairo_line_to(cr, xe, ye);
-	cairo_stroke(cr);
+	
+	swapi_canvas_set_line(cvs, 2);
+	swapi_canvas_draw_line(cvs, xs, ys, xe, ye);
+	swapi_canvas_stroke(cvs);
 	
 	// draw center point
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	cairo_arc(cr, cf->cf_cx, cf->cf_cy, 2, 0, 2*kMATH_PI);
-	cairo_fill(cr);
+	swapi_canvas_set_color(cvs, 0, 0, 0, 255);
+	swapi_canvas_draw_arc(cvs, cf->cf_cx, cf->cf_cy, 2, 0, 2*kMATH_PI);
+	swapi_canvas_fill(cvs);
 
 	// draw battery
 	arc = natv_battery_get(kNATV_BATTERY_CAPACITY);
@@ -489,16 +467,15 @@ static void clock_face_analog_draw(clock_face_t *cf, cairo_t *cr){
 	ye = kCLOCK_ANALOG_BATTERY*sin(arc*kMATH_PI/180) + cf->cf_by;
 	xs = cf->cf_bx;
 	ys = cf->cf_by;
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	cairo_set_line_width(cr, 1.5);
-	cairo_move_to(cr, xs, ys);
-	cairo_line_to(cr, xe, ye);
-	cairo_stroke(cr);
+	swapi_canvas_set_color(cvs, 0, 0, 0, 255);
+	swapi_canvas_set_line(cvs, 2);
+	swapi_canvas_draw_line(cvs, xs, ys, xe, ye);
+	swapi_canvas_stroke(cvs);
 
 	// draw battery center point
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	cairo_arc(cr, cf->cf_bx, cf->cf_by, 2, 0, 2*kMATH_PI);
-	cairo_fill(cr);
+	swapi_canvas_set_color(cvs, 0, 0, 0, 255);
+	swapi_canvas_draw_arc(cvs, cf->cf_bx, cf->cf_by, 2, 0, 2*kMATH_PI);
+	swapi_canvas_fill(cvs);
 
 	// draw signal
 	arc = natv_signal_get();
@@ -507,18 +484,20 @@ static void clock_face_analog_draw(clock_face_t *cf, cairo_t *cr){
 	ye = kCLOCK_ANALOG_SIGNAL*sin(arc*kMATH_PI/180) + cf->cf_sy;
 	xs = cf->cf_sx;
 	ys = cf->cf_sy;
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	cairo_set_line_width(cr, 1.5);
-	cairo_move_to(cr, xs, ys);
-	cairo_line_to(cr, xe, ye);
-	cairo_stroke(cr);
+	swapi_canvas_set_color(cvs, 0, 0, 0, 255);
+	swapi_canvas_set_line(cvs, 2);
+	swapi_canvas_draw_line(cvs, xs, ys, xe, ye);
+	swapi_canvas_stroke(cvs);
 
 	// draw battery center point
-	cairo_set_source_rgb(cr, 0, 0, 0);
-	cairo_arc(cr, cf->cf_sx, cf->cf_sy, 2, 0, 2*kMATH_PI);
-	cairo_fill(cr);
+	swapi_canvas_set_color(cvs, 0, 0, 0, 255);
+	swapi_canvas_draw_arc(cvs, cf->cf_sx, cf->cf_sy, 2, 0, 2*kMATH_PI);
+	swapi_canvas_fill(cvs);
+
+	swapi_view_draw(sv);
 }
 
+#if 0
 static void clock_face_digital_init(clock_face_t *cf, int width, int height, int rgb){
 	cairo_t				*cr;
 	cairo_surface_t		*surface;
@@ -624,6 +603,7 @@ static void clock_face_digital_draw(clock_face_t *cf, cairo_t *cr){
 		}
 	}
 }
+#endif
 
 static void clock_face_photo_init(clock_face_t *cf, int width, int height, int rgb){
 }
@@ -631,6 +611,6 @@ static void clock_face_photo_init(clock_face_t *cf, int width, int height, int r
 static void clock_face_photo_fini(clock_face_t *cf){
 }
 
-static void clock_face_photo_draw(clock_face_t *cf, cairo_t *cr){
+static void clock_face_photo_draw(clock_face_t *cf, swapi_view_t *sv){
 }
 

@@ -16,18 +16,19 @@ extern "C" {
 struct swapi_window;
 	
 typedef struct swapi_view{
-	struct swapi_window	*sv_win;
+	struct swapi_window		*sv_win;
 
-	struct list_head	sv_node;
+	struct list_head		sv_node;
 
-	swapi_canvas_t		sv_canvas;
+	swapi_canvas_t			sv_canvas;
 	
+	int					sv_visiable;
 	int					sv_x;
 	int					sv_y;
 	int					sv_width;
 	int					sv_height;
 
-	void (*on_draw)(struct swapi_view *sv, swapi_canvas_t *sc);
+	void (*on_draw)(struct swapi_view *sv, swapi_canvas_t *cvs);
 	int  (*on_key_down)(struct swapi_view *sv, int key);
 	int	 (*on_key_up)(struct swapi_view *sv, int key);
 	int  (*on_key_multiple)(struct swapi_view *sv, int key);
@@ -38,9 +39,15 @@ typedef struct swapi_view{
 
 int swapi_view_create(struct swapi_window *win, int x, int y, int width, int height,
 		swapi_view_t **sv);
-int swapi_view_destroy(struct swapi_window *win, swapi_view_t *sv);
+int swapi_view_destroy(swapi_view_t *sv);
 
 void swapi_view_draw(swapi_view_t *sv);
+
+int swapi_view_set_visiable(swapi_view_t *sv, int visiable);
+
+static inline swapi_canvas_t *swapi_view_get_canvas(swapi_view_t *view){
+	return &view->sv_canvas;
+}
 
 // used by swapi internally
 int _view_init(struct swapi_window *win, swapi_view_t *sv, int x, int y,

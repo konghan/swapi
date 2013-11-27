@@ -8,7 +8,6 @@
 #include "swapi_handler.h"
 #include "swapi_message.h"
 #include "swapi_swap.h"
-#include "swapi_shell.h"
 
 #include "swapi_sys_thread.h"
 #include "swapi_sys_logger.h"
@@ -83,8 +82,6 @@ static int swapi_loop_on_timer(swapi_message_t *msg, void *data){
 		swapi_log_info("post message %d to %s\n", msg->sm_type, swap->ss_name);
 		swapi_swap_post(swap, msg);
 	}
-
-	swapi_shell_post(msg);
 	
 	return 0;
 }

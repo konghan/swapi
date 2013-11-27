@@ -9,8 +9,6 @@
 #include "swapi_handler.h"
 #include "swapi_view.h"
 #include "swapi_swap.h"
-#include "swapi_shell.h"
-#include "swapi_render.h"
 
 #include "swapi_sys_thread.h"
 #include "swapi_sys_logger.h"
@@ -32,16 +30,10 @@ static int swapi_module_init(void *p){
 
 	swapi_handler_module_init();
 
-	swapi_view_module_init();
-
 	swapi_swap_module_init();
 
-	swapi_shell_module_init();
-
 	swapi_loop_module_init();
-		
-	swapi_render_module_init();
-
+	
 	return swapi_loop_run(NULL);
 }
 
