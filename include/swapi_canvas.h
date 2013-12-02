@@ -44,6 +44,8 @@ int swapi_canvas_destroy(swapi_canvas_t *cvs);
 int swapi_canvas_set_color(swapi_canvas_t *cvs, int red, int green, int blue, int alpha);
 int swapi_canvas_set_line(swapi_canvas_t *cvs, int width);
 
+int swapi_canvas_font_set_size(swapi_canvas_t *cvs, float size);
+
 int swapi_canvas_draw_line(swapi_canvas_t *cvs, float sx, float sy, float ex, float ey);
 int swapi_canvas_draw_arc(swapi_canvas_t *cvs, float xc, float yc,
 		float radius, float angle1, float angle2);
@@ -52,6 +54,7 @@ int swapi_canvas_draw_rectangle(swapi_canvas_t *cvs, float x, float y, float wid
 int swapi_canvas_draw_canvas(swapi_canvas_t *cvs, float x, float y, swapi_canvas_t *cvspaint);
 
 int swapi_canvas_draw_color(swapi_canvas_t *cvs, int r, int g, int b, int alpha);
+int swapi_canvas_draw_text(swapi_canvas_t *cvs, const char *text, int len,float x, float y);
 
 int swapi_canvas_fill(swapi_canvas_t *cvs);
 int swapi_canvas_stroke(swapi_canvas_t *cvs);

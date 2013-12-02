@@ -4,7 +4,8 @@ AR = i686-pc-mingw32-ar
 
 CFLAGS = -Wall -g -O2 
 
-INCLUDES = -I/usr/local/include -I/usr/local/include/cairo -I. -I../include -I../source -I../swaps
+INCLUDES = \
+		   -I. -I../include -I../source -I../swaps
 
 LDFLAGS = -L/usr/local/lib
 
@@ -39,5 +40,5 @@ $(TARGET) : $(win32-obj) $(common-obj) $(swap-obj)
 
 clean:
 	make -C ../../emulator/win32 clean
-	rm -f $(common-obj) $(win32-obj) $(swap-obj) $(TARGET) *.exe
+	rm -f $(common-obj) $(win32-obj) $(swap-obj) $(TARGET) *.exe *.log
 

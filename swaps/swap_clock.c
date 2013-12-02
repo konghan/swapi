@@ -68,10 +68,9 @@ static void clock_face_analog_init(clock_face_t *cf, int width, int height, int 
 static void clock_face_analog_fini(clock_face_t *cf);
 static void clock_face_analog_draw(clock_face_t *cf, swapi_view_t *view);
 
-static void clock_face_digital_init(clock_face_t *cf, int width, int height, int format){
-}
-static void clock_face_digital_fini(clock_face_t *cf){}
-static void clock_face_digital_draw(clock_face_t *cf, swapi_view_t *view){}
+static void clock_face_digital_init(clock_face_t *cf, int width, int height, int format);
+static void clock_face_digital_fini(clock_face_t *cf);
+static void clock_face_digital_draw(clock_face_t *cf, swapi_view_t *view);
 
 static void clock_face_photo_init(clock_face_t *cf, int width, int height, int format);
 static void clock_face_photo_fini(clock_face_t *cf);
@@ -216,7 +215,7 @@ static int clock_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	}
 
 	sc->sc_cur = get_face();
-//	sc->sc_cur ++;
+	sc->sc_cur ++;
 
 	clock_draw(sc);
 
@@ -497,113 +496,109 @@ static void clock_face_analog_draw(clock_face_t *cf, swapi_view_t *sv){
 	swapi_view_draw(sv);
 }
 
-#if 0
-static void clock_face_digital_init(clock_face_t *cf, int width, int height, int rgb){
-	cairo_t				*cr;
-	cairo_surface_t		*surface;
-	int					htitle, hbody;
-
+static void clock_face_digital_init(clock_face_t *cf, int width, int height, int format){
 	ASSERT(cf != NULL);
 
-	cf->cf_surface = cairo_image_surface_create(rgb, width, height);
-	if(cf->cf_surface == NULL){
-		swapi_log_warn("analog face create surface fail!\n");
-		return ;
-	}
-	
-	cr = cairo_create(cf->cf_surface);
-	if(cf == NULL){
-		swapi_log_warn("analog face create cairo context fail!\n");
+	if(swapi_canvas_create_image(width, height, format, &cf->cf_cvs) != 0){
+		swapi_log_warn("digital face create backgroud canvas fail!\n");
 		return ;
 	}
 
 	// draw background
-	surface = cairo_image_surface_create_from_png(kSWAP_CLOCK_BKGD);
-	if(surface == NULL){
-		swapi_log_warn("analog face load background fail!\n");
-		return ;
-	}
+	swapi_canvas_draw_color(cf->cf_cvs, 100, 100, 100, 255);
 
-	cairo_set_source_surface(cr, surface, 0, 0);
-	cairo_paint(cr);
-
-	cairo_set_source_rgba(cr, 0, 0, 0, 0.5);
-	cairo_set_line_width(cr, 3);
-	htitle = height / 4;
-	hbody  = height * 3 / 4;
+	// draw frame
+	swapi_canvas_set_line(cf->cf_cvs, 1);
+	swapi_canvas_set_color(cf->cf_cvs, 0, 0, 0, 255);
 	
-	cairo_move_to(cr, 0, htitle);
-	cairo_line_to(cr, width, htitle);
-	cairo_stroke(cr);
+	swapi_canvas_draw_line(cf->cf_cvs, 0, 32, 128, 32);
+	swapi_canvas_draw_line(cf->cf_cvs, 0, 96, 128, 96);
 
-	cairo_move_to(cr, 0, hbody);
-	cairo_line_to(cr, width, hbody);
-	cairo_stroke(cr);
-
-	cairo_destroy(cr);
+	swapi_canvas_stroke(cf->cf_cvs);
 }
 
 static void clock_face_digital_fini(clock_face_t *cf){
 	ASSERT(cf != NULL);
 	
-	cairo_surface_destroy(cf->cf_surface);
+	swapi_canvas_destroy(cf->cf_cvs);
 }
 
-#define kCLOCK_DIGITAL_BATTERY_SX			6
-#define kCLOCK_DIGITAL_BATTERY_SY			6
-#define kCLOCK_DIGITAL_BATTERY_WIDTH		34
-#define kCLOCK_DIGITAL_BATTERY_HEIGHT		20
+static const char *__gs_weekdays[] = {
+	"Mon",
+	"Tue",
+	"Wed",
+	"Thu",
+	"Fri",
+	"Sat",
+	"Sun",
+	"\0"
+};
 
-#define kCLOCK_DIGITAL_SIGNAL_SX			80
-#define kCLOCK_DIGITAL_SIGNAL_SY			16
-static void clock_face_digital_draw(clock_face_t *cf, cairo_t *cr){
+static const char *clock_weekday(int i){
+	if((i < 0 )||(i >6)) {
+		return NULL;
+	}
+
+	return __gs_weekdays[i];
+}
+
+static const char *__gs_moths[] = {
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
+	"\0",
+};
+
+static const char *clock_moth(int i){
+	if((i < 0) || (i > 11)){
+		return NULL;
+	}
+
+	return __gs_moths[i];
+}
+
+static void clock_face_digital_draw(clock_face_t *cf, swapi_view_t *sv){
 	natv_tm_t		tm;
-	int				cap;
-	int				i;
+	swapi_canvas_t	*cvs;
 
-	ASSERT((cf != NULL) && (cr != NULL));
+	char			buf[32];
+	
+	ASSERT((cf != NULL) && (sv != NULL));
 
-	cairo_set_source_surface(cr, cf->cf_surface, 0, 0);
-	cairo_paint(cr);
+	cvs = swapi_view_get_canvas(sv);
 
 	if(natv_time_localtime(&tm) != 0){
 		swapi_log_warn("clock analog get localtime fail!\n");
 		return ;
 	}
+
 	// draw clock
+	swapi_canvas_draw_canvas(cvs, 0, 0, cf->cf_cvs);
 
-	// draw battery
-	cap = natv_battery_get(kNATV_BATTERY_CAPACITY);
-	cairo_set_line_width(cr, 4.0);
-	cairo_set_source_rgba(cr, 0, 0, 0, 0.5);
-	cairo_rectangle(cr, kCLOCK_DIGITAL_BATTERY_SX, kCLOCK_DIGITAL_BATTERY_SY,
-			kCLOCK_DIGITAL_BATTERY_WIDTH, kCLOCK_DIGITAL_BATTERY_HEIGHT);
-	cairo_rectangle(cr, kCLOCK_DIGITAL_BATTERY_SX + kCLOCK_DIGITAL_BATTERY_WIDTH,
-			kCLOCK_DIGITAL_BATTERY_SY + 5, 4, 10);
-	cairo_stroke(cr);
+	sprintf(buf, "%0d:%0d\0", tm.tm_hour, tm.tm_min);
+	swapi_canvas_font_set_size(cvs, 40.0);
+	swapi_canvas_set_color(cvs, 255, 0, 0, 255);
+	swapi_canvas_draw_text(cvs, buf, 0, 5, 70);
 
-	cairo_set_source_rgba(cr, 0, 1, 0, 0.5);
-	cairo_rectangle(cr, kCLOCK_DIGITAL_BATTERY_SX + 2, kCLOCK_DIGITAL_BATTERY_SY + 2,
-			cap*(kCLOCK_DIGITAL_BATTERY_WIDTH - 2)/100, kCLOCK_DIGITAL_BATTERY_HEIGHT - 4);
-	cairo_fill(cr);
+	sprintf(buf, "%d %s, %s\0", tm.tm_mday, clock_moth(tm.tm_mon), clock_weekday(tm.tm_wday));
+	swapi_canvas_font_set_size(cvs, 16);
+	swapi_canvas_set_color(cvs, 0, 0, 0, 255);
+	swapi_canvas_draw_text(cvs, buf, 0, 5, 90);
 
-	// draw signal
-	cap = natv_signal_get();
-	cairo_set_line_width(cr, 2.0);
-	cairo_set_source_rgba(cr, 0, 0, 0, 1);
-	for(i = 0; i < 5; i++){
-		if(cap <= i*20){
-			cairo_arc(cr, kCLOCK_DIGITAL_SIGNAL_SX + i*10, kCLOCK_DIGITAL_SIGNAL_SY,
-					3, 0, 2*3.14);
-			cairo_stroke(cr);
-		}else{
-			cairo_arc(cr, kCLOCK_DIGITAL_SIGNAL_SX + i*10, kCLOCK_DIGITAL_SIGNAL_SY,
-					4, 0, 2*3.14);;
-			cairo_fill(cr);
-		}
-	}
+
+	swapi_canvas_stroke(cvs);
+
+	swapi_view_draw(sv);
 }
-#endif
 
 static void clock_face_photo_init(clock_face_t *cf, int width, int height, int rgb){
 }

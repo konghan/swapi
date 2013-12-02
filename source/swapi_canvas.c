@@ -146,8 +146,8 @@ int swapi_canvas_set_line(swapi_canvas_t *cvs, int width){
 int swapi_canvas_draw_line(swapi_canvas_t *cvs, float sx, float sy, float ex, float ey){
 	ASSERT((cvs != NULL) && (cvs->sc_sfptr != NULL) && (cvs->sc_sfptr->ss_cr != NULL));
 
-	cairo_move_to(cvs->sc_sfptr->ss_cr, sx, sy);
-	cairo_line_to(cvs->sc_sfptr->ss_cr, ex, ey);
+	cairo_move_to(cvs->sc_sfptr->ss_cr, cvs->sc_x + sx, cvs->sc_y + sy);
+	cairo_line_to(cvs->sc_sfptr->ss_cr, cvs->sc_x + ex, cvs->sc_y + ey);
 
 	return 0;
 }
@@ -156,7 +156,7 @@ int swapi_canvas_draw_arc(swapi_canvas_t *cvs, float xc, float yc, float radius,
 		float angle1, float angle2){
 	ASSERT((cvs != NULL) && (cvs->sc_sfptr != NULL) && (cvs->sc_sfptr->ss_cr != NULL));
 	
-	cairo_arc(cvs->sc_sfptr->ss_cr, xc, yc, radius, angle1, angle2);
+	cairo_arc(cvs->sc_sfptr->ss_cr, cvs->sc_x + xc, cvs->sc_y + yc, radius, angle1, angle2);
 
 	return 0;
 }
@@ -164,7 +164,7 @@ int swapi_canvas_draw_arc(swapi_canvas_t *cvs, float xc, float yc, float radius,
 int swapi_canvas_draw_rectangle(swapi_canvas_t *cvs, float x, float y, float width, float height){
 	ASSERT((cvs != NULL) && (cvs->sc_sfptr != NULL) && (cvs->sc_sfptr->ss_cr != NULL));
 
-	cairo_rectangle(cvs->sc_sfptr->ss_cr, x, y, width, height);
+	cairo_rectangle(cvs->sc_sfptr->ss_cr, cvs->sc_x + x, cvs->sc_y + y, width, height);
 
 	return 0;
 }
@@ -172,7 +172,8 @@ int swapi_canvas_draw_rectangle(swapi_canvas_t *cvs, float x, float y, float wid
 int swapi_canvas_draw_canvas(swapi_canvas_t *cvs, float x, float y, swapi_canvas_t *cvspaint){
 	ASSERT((cvs != NULL) && (cvs->sc_sfptr != NULL) && (cvs->sc_sfptr->ss_cr != NULL));
 
-	cairo_set_source_surface(cvs->sc_sfptr->ss_cr, cvspaint->sc_sfptr->ss_sf, x, y);
+	cairo_set_source_surface(cvs->sc_sfptr->ss_cr, cvspaint->sc_sfptr->ss_sf,
+			cvs->sc_x + x, cvs->sc_y + y);
 	cairo_paint(cvs->sc_sfptr->ss_cr);
 
 	return 0;
@@ -200,6 +201,24 @@ int swapi_canvas_stroke(swapi_canvas_t *cvs){
 
 	cairo_stroke(cvs->sc_sfptr->ss_cr);
 
+	return 0;
+}
+
+
+int swapi_canvas_font_set_size(swapi_canvas_t *cvs, float size){
+	ASSERT((cvs != NULL) && (cvs->sc_sfptr != NULL) && (cvs->sc_sfptr->ss_cr != NULL));
+
+	cairo_set_font_size(cvs->sc_sfptr->ss_cr, size);
+
+	return 0;
+}
+
+int swapi_canvas_draw_text(swapi_canvas_t *cvs, const char *text, int len,float x, float y){
+	ASSERT((cvs != NULL) && (cvs->sc_sfptr != NULL) && (cvs->sc_sfptr->ss_cr != NULL));
+
+	cairo_move_to(cvs->sc_sfptr->ss_cr, cvs->sc_x + x, cvs->sc_y + y);
+	cairo_show_text(cvs->sc_sfptr->ss_cr, text);
+	
 	return 0;
 }
 

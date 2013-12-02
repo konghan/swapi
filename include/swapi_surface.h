@@ -13,13 +13,17 @@ extern "C" {
 #endif
 
 typedef struct swapi_surface{
+	int					ss_init;
+
 	cairo_surface_t		*ss_sf;
 	cairo_t				*ss_cr;
-
+	
+	cairo_font_face_t	*ss_font;
 }swapi_surface_t;
 
 int swapi_surface_init(swapi_surface_t *sf, int width, int height, int format);
 int swapi_surface_fini(swapi_surface_t *sf);
+
 
 #ifdef __cplusplus
 }
