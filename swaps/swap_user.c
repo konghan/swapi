@@ -4,6 +4,8 @@
  */
 
 #include "swap_user.h"
+#include "swapi_sys_logger.h"
+#include "swapi_sys_cache.h"
 
 #include "natv_io.h"
 
@@ -22,6 +24,7 @@ typedef struct user_main{
 
 	int					um_init;
 	int					um_count;
+
 	struct list_head	um_users;
 
 	natv_io_t			*um_io;
@@ -42,8 +45,8 @@ static inline int user_save(user_main_t *um){
 	list_for_each_entry(su, &um->um_users, su_node){
 		memset(&up, 0, sizeof(up));
 
-		memcpy(su->su_uid, up.up_uid, sizeof(uuid_t));
-		up.up_pic =  su->su_pic;
+		memcpy(&su->su_uid, &up.up_uid, sizeof(uuid_t));
+		up.up_pic =  su->su_picid;
 		strcpy(su->su_name, up.up_name);
 
 		natv_io_dwrite(um->um_file, &up, sizeof(up));
@@ -188,7 +191,7 @@ int swap_user_init(){
 			break;
 		}
 
-		su = heap_alloc(sizeof(*su));
+		su = swapi_heap_alloc(sizeof(*su));
 		if(su == NULL){
 			fail = 1;
 			break;
@@ -197,7 +200,7 @@ int swap_user_init(){
 
 		INIT_LIST_HEAD(&su->su_node);
 		strcpy(su->su_name, up.up_name);
-		memcpy(su->su_uid, up.up_uid, sizeof(uuid_t));
+		memcpy(&su->su_uid, &up.up_uid, sizeof(uuid_t));
 
 		swapi_spin_lock(&um->um_lock);
 		list_add_tail(&su->su_node, &um->um_users);
@@ -217,6 +220,7 @@ int swap_user_init(){
 
 int swap_user_fini(){
 	swap_user_t		*pos, *temp;
+	user_main_t		*um  = get_user();
 	
 	um->um_init = 0;
 	swapi_spin_fini(&um->um_lock);
@@ -225,7 +229,7 @@ int swap_user_fini(){
 	natv_io_close(um->um_io);
 
 	list_for_each_entry_safe(pos, temp, &um->um_users, su_node){
-		heap_free(pos);
+		swapi_heap_free(pos);
 	}
 
 	return 0;

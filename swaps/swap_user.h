@@ -25,7 +25,7 @@ typedef struct swap_user{
 
 	uuid_t				su_uid;
 	char				su_name[kSWAP_USER_NAME_LEN];
-	int					su_pic;
+	int					su_picid;
 }swap_user_t;
 
 int swap_user_add(swap_user_t *su);
@@ -35,9 +35,10 @@ int swap_user_count();
 
 swap_user_t *swap_user_first();
 swap_user_t *swap_user_last();
+swap_user_t *swap_user_current();
 
-swap_user_t *swap_user_next();
-swap_user_t *swap_user_prev();
+swap_user_t *swap_user_next(swap_user_t *su);
+swap_user_t *swap_user_prev(swap_user_t *su);
 
 int swap_user_init();
 int swap_user_fini();

@@ -584,12 +584,12 @@ static void clock_face_digital_draw(clock_face_t *cf, swapi_view_t *sv){
 	// draw clock
 	swapi_canvas_draw_canvas(cvs, 0, 0, cf->cf_cvs);
 
-	sprintf(buf, "%0d:%0d\0", tm.tm_hour, tm.tm_min);
+	sprintf(buf, "%0d:%0d", tm.tm_hour, tm.tm_min);
 	swapi_canvas_font_set_size(cvs, 40.0);
 	swapi_canvas_set_color(cvs, 255, 0, 0, 255);
 	swapi_canvas_draw_text(cvs, buf, 0, 5, 70);
 
-	sprintf(buf, "%d %s, %s\0", tm.tm_mday, clock_moth(tm.tm_mon), clock_weekday(tm.tm_wday));
+	sprintf(buf, "%d %s, %s", tm.tm_mday, clock_moth(tm.tm_mon), clock_weekday(tm.tm_wday));
 	swapi_canvas_font_set_size(cvs, 16);
 	swapi_canvas_set_color(cvs, 0, 0, 0, 255);
 	swapi_canvas_draw_text(cvs, buf, 0, 5, 90);

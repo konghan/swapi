@@ -110,3 +110,32 @@ int swapi_surface_fini(swapi_surface_t *ss){
 	return 0;
 }
 
+int swapi_surface_init_from_png(swapi_surface_t *ss, const char *png){
+	ASSERT(ss != NULL);
+
+	ss->ss_init = 0;
+
+	ss->ss_sf = cairo_image_surface_create_from_png(png);
+	if(ss->ss_sf == NULL){
+		swapi_log_warn("create image surface fail!\n");
+
+		return -1;
+	}
+
+	ss->ss_cr = cairo_create(ss->ss_sf);
+	if(ss->ss_cr == NULL){
+		swapi_log_warn("create cairo context fail!\n");
+		cairo_surface_destroy(ss->ss_sf);
+
+		return -1;
+	}
+
+	ss->ss_font = get_sf()->sm_font;
+	cairo_set_font_face(ss->ss_cr, ss->ss_font);
+
+	ss->ss_init = 1;
+
+	return 0;
+}
+
+

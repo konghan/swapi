@@ -29,10 +29,13 @@ typedef struct swapi_view{
 	int					sv_height;
 
 	void (*on_draw)(struct swapi_view *sv, swapi_canvas_t *cvs);
+	
 	int  (*on_key_down)(struct swapi_view *sv, int key);
 	int	 (*on_key_up)(struct swapi_view *sv, int key);
 	int  (*on_key_multiple)(struct swapi_view *sv, int key);
 	int  (*on_key_longpress)(struct swapi_view *sv, int key);
+	int	 (*on_key_click)(struct swapi_view *sv, int key);
+
 	int  (*on_touch)(struct swapi_view *sv, int motion);
 	void (*on_focus)(struct swapi_view *sv, int focus);
 }swapi_view_t;

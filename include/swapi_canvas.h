@@ -7,6 +7,8 @@
 #define __SWAPI_CANVAS_H__
 
 #include "swapi_surface.h"
+#include "swapi_image.h"
+
 #include "swapi_sys_atomic.h"
 
 #ifdef __cplusplus
@@ -55,6 +57,8 @@ int swapi_canvas_draw_canvas(swapi_canvas_t *cvs, float x, float y, swapi_canvas
 
 int swapi_canvas_draw_color(swapi_canvas_t *cvs, int r, int g, int b, int alpha);
 int swapi_canvas_draw_text(swapi_canvas_t *cvs, const char *text, int len,float x, float y);
+
+int swapi_canvas_draw_image(swapi_canvas_t *cvs, swapi_image_t *img, float x, float y);
 
 int swapi_canvas_fill(swapi_canvas_t *cvs);
 int swapi_canvas_stroke(swapi_canvas_t *cvs);

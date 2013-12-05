@@ -171,7 +171,7 @@ exit_clock:
 static int swapi_loop_setcur(swapi_loop_t *sl, swapi_swap_t *swap){
 	
 	// post on_resume message to swap
-	
+	// FIXME: draw top swap
 	sl->sl_cur = swap;
 
 	return -1;

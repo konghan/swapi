@@ -24,6 +24,7 @@ typedef struct swapi_surface{
 int swapi_surface_init(swapi_surface_t *sf, int width, int height, int format);
 int swapi_surface_fini(swapi_surface_t *sf);
 
+int swapi_surface_init_from_png(swapi_surface_t *sf, const char *png);
 
 #ifdef __cplusplus
 }

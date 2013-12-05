@@ -188,6 +188,15 @@ int swapi_canvas_draw_color(swapi_canvas_t *cvs, int r, int g, int b, int alpha)
 	return 0;
 }
 
+int swapi_canvas_draw_image(swapi_canvas_t *cvs, swapi_image_t *img, float x, float y){
+	ASSERT((cvs != NULL) && (cvs->sc_sfptr != NULL) && (cvs->sc_sfptr->ss_cr != NULL));
+
+	cairo_set_source_surface(cvs->sc_sfptr->ss_cr, img->si_surface.ss_sf, x, y);
+	cairo_paint(cvs->sc_sfptr->ss_cr);
+
+	return 0;
+}
+
 int swapi_canvas_fill(swapi_canvas_t *cvs){
 	ASSERT((cvs != NULL) && (cvs->sc_sfptr != NULL) && (cvs->sc_sfptr->ss_cr != NULL));
 
