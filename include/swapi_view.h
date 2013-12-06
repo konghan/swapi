@@ -17,16 +17,7 @@ struct swapi_window;
 	
 typedef struct swapi_view{
 	struct swapi_window		*sv_win;
-
-	struct list_head		sv_node;
-
 	swapi_canvas_t			sv_canvas;
-	
-	int					sv_visiable;
-	int					sv_x;
-	int					sv_y;
-	int					sv_width;
-	int					sv_height;
 
 	void (*on_draw)(struct swapi_view *sv, swapi_canvas_t *cvs);
 	
@@ -40,22 +31,17 @@ typedef struct swapi_view{
 	void (*on_focus)(struct swapi_view *sv, int focus);
 }swapi_view_t;
 
-int swapi_view_create(struct swapi_window *win, int x, int y, int width, int height,
-		swapi_view_t **sv);
+int swapi_view_init(swapi_view_t *sv, struct swapi_window *win, int x, int y, int w, int h);
+int swapi_view_fini(swapi_view_t *sv);
+
+int swapi_view_create(struct swapi_window *win, int x, int y, int w, int h, swapi_view_t **sv);
 int swapi_view_destroy(swapi_view_t *sv);
 
 void swapi_view_draw(swapi_view_t *sv);
 
-int swapi_view_set_visiable(swapi_view_t *sv, int visiable);
-
 static inline swapi_canvas_t *swapi_view_get_canvas(swapi_view_t *view){
 	return &view->sv_canvas;
 }
-
-// used by swapi internally
-int _view_init(struct swapi_window *win, swapi_view_t *sv, int x, int y,
-		int width, int height);
-int _view_fini(swapi_view_t *sv);
 
 #ifdef __cplusplus
 }

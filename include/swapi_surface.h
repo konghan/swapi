@@ -16,7 +16,7 @@ typedef struct swapi_surface{
 	int					ss_init;
 
 	cairo_surface_t		*ss_sf;
-	cairo_t				*ss_cr;
+//	cairo_t				*ss_cr;
 	
 	cairo_font_face_t	*ss_font;
 }swapi_surface_t;
@@ -25,6 +25,14 @@ int swapi_surface_init(swapi_surface_t *sf, int width, int height, int format);
 int swapi_surface_fini(swapi_surface_t *sf);
 
 int swapi_surface_init_from_png(swapi_surface_t *sf, const char *png);
+
+static inline cairo_surface_t *swapi_surface_get_csf(swapi_surface_t *sf){
+	return sf->ss_sf;
+}
+
+static inline cairo_font_face_t *swapi_surface_get_cff(swapi_surface_t *sf){
+	return sf->ss_font;
+}
 
 #ifdef __cplusplus
 }

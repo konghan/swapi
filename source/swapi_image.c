@@ -5,37 +5,28 @@
 
 #include "swapi_image.h"
 
-#include "swapi_sys_cache.h"
 #include "swapi_sys_logger.h"
+#include "swapi_sys_thread.h"
 
-int swapi_image_create_from_png(const char *png, swapi_image_t **si){
-	swapi_image_t	*img;
-
+int swapi_image_init_from_png(swapi_image_t *si, const char *png){
 	ASSERT(si != NULL);
 
-	img = swapi_heap_alloc(sizeof(*img));
-	if(img == NULL){
-		swapi_log_warn("no memory for swapi image!\n");
-		return -ENOMEM;
-	}
-
-	if(swapi_surface_init_from_png(&img->si_surface, png) != 0){
-		swapi_log_warn("init surface from png fail!\n");
-		swapi_heap_free(img);
+	si->si_sf = cairo_image_surface_create_from_png(png);
+	if(si->si_sf == NULL){
+		swapi_log_warn("create image from png fail!\n");
 		return -1;
 	}
-
-	*si = img;
 
 	return 0;
 }
 
-int swapi_image_destroy(swapi_image_t *si){
+int swapi_image_fini(swapi_image_t *si){
 	ASSERT(si != NULL);
 
-	swapi_surface_fini(&si->si_surface);
-
-	swapi_heap_free(si);
+	if(si->si_sf != NULL){
+		cairo_surface_destroy(si->si_sf);
+	}
+	si->si_sf = NULL;
 
 	return 0;
 }

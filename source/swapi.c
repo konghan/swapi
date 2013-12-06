@@ -16,7 +16,7 @@
 
 #include "list.h"
 
-extern int swapi_surface_module_init();
+extern int swapi_canvas_module_init();
 
 static swapi_thread_t	__gs_main_loop_thrd;
 
@@ -28,7 +28,7 @@ void swapi_debug(){
 
 static int swapi_module_init(void *p){
 
-	swapi_surface_module_init();
+	swapi_canvas_module_init();
 
 	swapi_queue_module_init();
 

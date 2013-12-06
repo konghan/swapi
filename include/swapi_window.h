@@ -19,40 +19,49 @@ extern "C" {
 #endif
 
 typedef struct swapi_window{
-	swapi_view_t		sw_view;
-
-	swapi_canvas_t		sw_canvas;
+	cairo_surface_t		*sw_sf;
 	
 	int					sw_width;
 	int					sw_height;
 	int					sw_format;
 
 	swapi_view_t		*sw_focus;
-
-	swapi_spinlock_t	sw_lock;
-
-	struct list_head	sw_views;
-
-	struct list_head	sw_node;
 }swapi_window_t;
 
-int swapi_window_create(swapi_window_t **win);
-int swapi_window_destroy(swapi_window_t *win);
+int swapi_window_init(swapi_window_t *win, int width, int height, int format);
+int swapi_window_fini(swapi_window_t *win);
 
-int swapi_window_invoke(swapi_window_t *win, swapi_message_t *msg);
-int swapi_window_draw(swapi_window_t *win);
-
-static inline swapi_view_t *swapi_window_get_focus(swapi_window_t *win){
-	return win->sw_focus;
+static inline void swapi_window_set_view(swapi_window_t *win, swapi_view_t *view){
+	view->sv_win = win;
+	win->sw_focus = view;
 }
 
 static inline swapi_view_t *swapi_window_get_view(swapi_window_t *win){
-	return &win->sw_view;
+	return win->sw_focus;
 }
 
-// used by swapi internally
-void _window_render_rectangle(swapi_window_t *win, int x, int y, int width, int height);
+static inline int swapi_window_get_width(swapi_window_t *win){
+	return win->sw_width;
+}
 
+static inline int swapi_window_get_height(swapi_window_t *win){
+	return win->sw_height;
+}
+
+static inline int swapi_window_get_format(swapi_window_t *win){
+	return win->sw_format;
+}
+
+int swapi_window_invoke(swapi_window_t *win, swapi_message_t *msg);
+
+int swapi_window_draw(swapi_window_t *win);
+
+void swapi_window_render(swapi_window_t *win);
+
+// used by swapi internally
+static inline cairo_surface_t *_window_get_surface(swapi_window_t *win){
+	return win->sw_sf;
+}
 #ifdef __cplusplus
 }
 #endif

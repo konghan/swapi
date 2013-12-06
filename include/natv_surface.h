@@ -6,6 +6,8 @@
 #ifndef __NATV_SURFACE_H__
 #define __NATV_SURFACE_H__
 
+#include <cairo/cairo.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -20,7 +22,7 @@ typedef struct natv_surface_info{
 
 int natv_surface_getinfo(natv_surface_info_t *info);
 
-int natv_surface_draw(struct swapi_surface *sf, int x, int y, int width, int height);
+int natv_surface_draw(cairo_surface_t *sf, int x, int y, int width, int height);
 
 int natv_surface_renter_to_device();
 

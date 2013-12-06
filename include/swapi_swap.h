@@ -31,16 +31,15 @@ typedef struct swapi_swap_cbs{
 
 	int (*on_pause)(swapi_swap_t *swap);
 	int (*on_resume)(swapi_swap_t *swap);
-
-//	int (*on_idle)(struct sw_app_data *swad);
 }swapi_swap_cbs_t;
 
 typedef struct swapi_swap{
 	swapi_queue_t		*ss_queue;
 	swapi_handler_t		*ss_handler;
 
-	struct list_head	ss_wins;
-	swapi_window_t		*ss_wincur;
+	__swapi_convar_t	ss_cv;
+
+	swapi_window_t		ss_win;
 
 	// link to main loop
 	struct list_head	ss_node;
@@ -65,17 +64,18 @@ static inline void *swapi_swap_get(swapi_swap_t *swap){
 	return swap->ss_data;
 }
 
+static inline swapi_window_t *swapi_swap_get_window(swapi_swap_t *swap){
+	return &swap->ss_win;
+}
+
 int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **swap);
 int swapi_swap_destroy(swapi_swap_t *swap);
+
+int swapi_swap_kick(swapi_swap_t *swap);
 
 int swapi_swap_post(swapi_swap_t *swap, swapi_message_t *msg);
 
 int swapi_swap_add_handler(swapi_swap_t *ss, int type, swapi_handler_entry_t *she);
-
-int swapi_swap_push_window(swapi_swap_t *swap, swapi_window_t *win);
-int swapi_swap_pop_window(swapi_swap_t *swap, swapi_window_t **win);
-
-swapi_window_t *swapi_swap_top_window(swapi_swap_t *swap);
 
 static inline int swapi_swap_status_change(swapi_swap_t *swap, int status){
 	swapi_message_t		msg;

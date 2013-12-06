@@ -185,14 +185,14 @@ int natv_io_dclose(natv_file_t *nf){
 	return 0;
 }
 
-size_t natv_io_dread(natv_file_t *nf, char *buf, size_t size){
+size_t natv_io_dread(natv_file_t *nf, void *buf, size_t size){
 	ASSERT((nf != NULL) && (buf != NULL));
 	ASSERT(nf->nf_file != NULL);
 
 	return fread(buf, size, 0, nf->nf_file);
 }
 
-size_t natv_io_dwrite(natv_file_t *nf, const char *buf, size_t size){
+size_t natv_io_dwrite(natv_file_t *nf, const void *buf, size_t size){
 	ASSERT((nf != NULL) && (nf->nf_file != NULL));
 	ASSERT(buf != NULL);
 

@@ -5,8 +5,6 @@
 #include "swapi_view.h"
 #include "swapi_window.h"
 
-#include "natv_surface.h"
-
 #include "swapi_sys_cache.h"
 #include "swapi_sys_logger.h"
 
@@ -38,70 +36,55 @@ static void view_default_on_focus(swapi_view_t *sw, int focus){
 	return ;
 }
 
-int _view_init(swapi_window_t *win, swapi_view_t *sw, int x, int y,
-		int width, int height){
-	ASSERT((win != NULL) && (sw != NULL));
+int swapi_view_init(swapi_view_t *view, struct swapi_window *win, int x, int y, int w, int h){
+	view->sv_win = win;	
+	if(swapi_canvas_init_from_surface(&view->sv_canvas, x, y, w, h, _window_get_surface(win)) != 0){
+		swapi_log_warn("init canvas_fail!\n");
+		return -1;
+	}
 
-	sw->sv_win = win;
-	INIT_LIST_HEAD(&sw->sv_node);
+	view->on_draw			 = view_default_on_draw;
+	view->on_key_down		 = view_default_on_key_down;
+	view->on_key_up		 = view_default_on_key_up;
+	view->on_key_multiple  = view_default_on_key_multiple;
+	view->on_key_longpress = view_default_on_key_longpress;
 
-	_canvas_init(&win->sw_canvas, &sw->sv_canvas, x, y, width, height, 0);
-
-	sw->sv_x = x;
-	sw->sv_y = y;
-	sw->sv_width = width;
-	sw->sv_height = height;
-
-	sw->on_draw			 = view_default_on_draw;
-	sw->on_key_down		 = view_default_on_key_down;
-	sw->on_key_up		 = view_default_on_key_up;
-	sw->on_key_multiple  = view_default_on_key_multiple;
-	sw->on_key_longpress = view_default_on_key_longpress;
-
-	sw->on_touch		= view_default_on_touch;
-	sw->on_focus		= view_default_on_focus;
-	
-	swapi_spin_lock(&win->sw_lock);
-	// FIXME: sort in location
-	list_add_tail(&sw->sv_node, &win->sw_views);
-	swapi_spin_unlock(&win->sw_lock);
+	view->on_touch		= view_default_on_touch;
+	view->on_focus		= view_default_on_focus;
 
 	return 0;
 }
 
-int _view_fini(swapi_view_t *sw){
-	
-	swapi_spin_lock(&sw->sv_win->sw_lock);
-	list_del(&sw->sv_node);
-	swapi_spin_unlock(&sw->sv_win->sw_lock);
-
-	_canvas_fini(&sw->sv_canvas);
+int swapi_view_fini(swapi_view_t *sv){
+	swapi_canvas_fini(&sv->sv_canvas);
 	return 0;
 }
 
 int swapi_view_create(swapi_window_t *win, int x, int y, int width, int height,
 		swapi_view_t **sw){
-	swapi_view_t	*wg;
+
+	swapi_view_t	*view;
 
 	ASSERT((win != NULL) && (sw != NULL));
 
-	wg = swapi_heap_alloc(sizeof(*wg));
-	if(wg == NULL){
+	view = swapi_heap_alloc(sizeof(*view));
+	if(view == NULL){
 		swapi_log_warn("alloc memory for view fail!\n");
 		return -ENOMEM;
 	}
-	
-	_view_init(win, wg, x, y, width, height);
+	memset(view, 0, sizeof(*view));
 
-	*sw = wg;
+	swapi_view_init(view, win, x, y, width, height);
+	
+	*sw = view;
 
 	return 0;
 }
 
 int swapi_view_destroy(swapi_view_t *sw){
 	ASSERT(sw != NULL);
-
-	_view_fini(sw);
+	
+	swapi_view_fini(sw);
 
 	swapi_heap_free(sw);
 
@@ -113,7 +96,6 @@ void swapi_view_draw(swapi_view_t *sw){
 
 	sw->on_draw(sw, &sw->sv_canvas);
 
-	_window_render_rectangle(sw->sv_win, sw->sv_x, sw->sv_y, sw->sv_width, sw->sv_height);
+	swapi_window_render(sw->sv_win);
 }
-
 
