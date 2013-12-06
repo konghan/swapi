@@ -6,7 +6,6 @@
 #ifndef __SWAPI_CANVAS_H__
 #define __SWAPI_CANVAS_H__
 
-#include "swapi_surface.h"
 #include "swapi_image.h"
 
 
