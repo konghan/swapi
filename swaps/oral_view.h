@@ -6,6 +6,7 @@
 #ifndef __ORAL_VIEW_H__
 #define __ORAL_VIEW_H__
 
+#include "swapi_window.h"
 #include "swapi_view.h"
 
 #include "oral_model.h"
@@ -32,45 +33,17 @@ typedef struct oral_view_text{
 	oral_vmsg_item_t	*ot_item;
 }oral_view_text_t;
 
-typedef struct oral_view_record{
+typedef struct oral_view_rcrd{
 	swapi_view_t		or_view;
 
 	oral_vmsg_item_t	*or_item;
-}oral_view_record_t;
+}oral_view_rcrd_t;
 
-/*
- * interface of user
- */
-static inline swapi_view_t *oral_view_user_get(oral_view_user_t *ou){
-	return &ou->ou_view;
-}
+int oral_view_user_init(oral_view_user_t *ovu, swapi_window_t *win);
+int oral_view_user_fini(oral_view_user_t *ovu);
 
-oral_view_user_t *oral_view_user_create(swapi_window_t *win);
-int oral_view_user_destroy(oral_view_user_t *ou);
-
-swap_user_t *oral_view_user_current(oral_view_user_t *ou);
-
-/*
- * interface of vmsg
- */
-static inline swapi_view_t *oral_view_vmsg_get(oral_view_vmsg_t *ov){
-	return &ov->ov_view;
-}
-
-/*
- * interface of text
- */
-static inline swapi_view_t *oral_view_text_get(oral_view_text_t *ot){
-	return &ot->ot_view;
-}
-
-/*
- * interface of record
- */
-static inline swapi_view_t *oral_view_record_get(oral_view_record_t *vr){
-	return &vr->or_view;
-}
-
+int oral_view_user_next(oral_view_user_t *ovu);
+int oral_view_user_prev(oral_view_user_t *ovu);
 
 #ifdef __cplusplus
 }

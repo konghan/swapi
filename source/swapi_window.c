@@ -39,7 +39,7 @@ int swapi_window_fini(swapi_window_t *win){
 void swapi_window_render(swapi_window_t *win){
 	ASSERT(win != NULL);
 
-	natv_surface_draw(win->sw_sf, 0, 0, win->sw_width, win->sw_height);
+	natv_surface_render();
 }
 
 int swapi_window_draw(swapi_window_t *win){

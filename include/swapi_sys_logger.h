@@ -23,25 +23,25 @@ enum{
 };
 
 
-int swapi_logger_print(int level, char *fmt, ...);
+int swapi_logger_print(int level, const char *file, const int line, char *fmt, ...);
 
 #define swapi_log_fatal(__fmt,...)	\
-    swapi_logger_print(SWAPI_LOGGER_FATAL,__fmt,##__VA_ARGS__)
+    swapi_logger_print(SWAPI_LOGGER_FATAL,__FILE__,__LINE__,__fmt,##__VA_ARGS__)
 
 #define swapi_log_error(__fmt,...)	\
-    swapi_logger_print(SWAPI_LOGGER_ERROR,__fmt,##__VA_ARGS__)
+    swapi_logger_print(SWAPI_LOGGER_ERROR,__FILE__,__LINE__,__fmt,##__VA_ARGS__)
 
 #define swapi_log_warn(__fmt,...)	\
-    swapi_logger_print(SWAPI_LOGGER_WARN,__fmt,##__VA_ARGS__)
+    swapi_logger_print(SWAPI_LOGGER_WARN,__FILE__,__LINE__,__fmt,##__VA_ARGS__)
 
 #define swapi_log_info(__fmt,...)	\
-    swapi_logger_print(SWAPI_LOGGER_INFO,__fmt,##__VA_ARGS__)
+    swapi_logger_print(SWAPI_LOGGER_INFO,__FILE__,__LINE__,__fmt,##__VA_ARGS__)
 
 #define swapi_log_debug(__fmt,...)	\
-    swapi_logger_print(SWAPI_LOGGER_DEBUG,__fmt,##__VA_ARGS__)
+    swapi_logger_print(SWAPI_LOGGER_DEBUG,__FILE__,__LINE__,__fmt,##__VA_ARGS__)
 
 #define swapi_log_trace(__fmt,...)	\
-    swapi_logger_print(SWAPI_LOGGER_TRACE,__fmt,##__VA_ARGS__)
+    swapi_logger_print(SWAPI_LOGGER_TRACE,__FILE__,__LINE__,__fmt,##__VA_ARGS__)
 
 int swapi_log_module_init();
 int swapi_log_module_fini();

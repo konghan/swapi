@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define kNATV_IO_ROOTFS			"/home/konghan/swapi/rootfs/"
+#define kNATV_IO_ROOTFS			"../rootfs/"
 #define kNATV_IO_SWAPS			"swaps/"
 #define kNATV_IO_DATA			"/data/"
 
@@ -132,7 +132,7 @@ size_t natv_io_fread(natv_file_t *nf, char *buf, size_t size){
 	return fread(buf, size, 0, nf->nf_file);
 }
 
-int natv_io_fseek(natv_file_t *nf, long offset, int origin){
+int natv_io_seek(natv_file_t *nf, long offset, int origin){
 	ASSERT(nf != NULL);
 	ASSERT(nf->nf_file != NULL);
 

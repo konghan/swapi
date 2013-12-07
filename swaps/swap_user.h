@@ -6,6 +6,7 @@
 #ifndef __SWAP_USER_H__
 #define __SWAP_USER_H__
 
+#include "swapi_types.h"
 #include "list.h"
 
 #ifdef __cplusplus
@@ -18,12 +19,10 @@ enum {
 	kSWAP_USER_PICID_DEFAULT = 0,
 };
 
-typedef struct uuid { char uuid[16]; }uuid_t;
-
 typedef struct swap_user{
 	struct list_head	su_node;
 
-	uuid_t				su_uid;
+	swapi_uuid_t		su_uid;
 	char				su_name[kSWAP_USER_NAME_LEN];
 	int					su_picid;
 }swap_user_t;
@@ -35,7 +34,6 @@ int swap_user_count();
 
 swap_user_t *swap_user_first();
 swap_user_t *swap_user_last();
-swap_user_t *swap_user_current();
 
 swap_user_t *swap_user_next(swap_user_t *su);
 swap_user_t *swap_user_prev(swap_user_t *su);

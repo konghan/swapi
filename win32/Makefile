@@ -23,7 +23,7 @@ win32-obj = swapi_sys_cache.o swapi_sys_logger.o						\
 			natv_time.o natv_io.o natv_cfgsrv.o							\
 			natv_hwdrv.o
 
-swap-obj = swap_clock.o 
+swap-obj = swap_clock.o swap_user.o oral_view.o swap_oral.o
 
 #swap_user.o swap_oral.o oral_view.o
 

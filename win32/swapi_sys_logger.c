@@ -41,7 +41,7 @@ static char *log_ltos(int level){
     return (__log_ltos[level]).ll_string;
 }
 
-int swapi_logger_print(int level, char *fmt, ...){
+int swapi_logger_print(int level, const char *file, const int line, char *fmt, ...){
     swapi_logger_t	*log = &__log_data;
     char			buf[SWAPI_LOGGER_MAX_BUF];
     int				size = 0;
@@ -51,7 +51,7 @@ int swapi_logger_print(int level, char *fmt, ...){
 		return -1;
     }
 
-    size = _snprintf(buf, SWAPI_LOGGER_MAX_BUF, "%s:", log_ltos(level));
+    size = _snprintf(buf, SWAPI_LOGGER_MAX_BUF, "%s:[%s - %d]: ", log_ltos(level), file, line);
 
     va_start(args, fmt);
     size += _vsnprintf(buf+size, SWAPI_LOGGER_MAX_BUF-size, fmt, args);

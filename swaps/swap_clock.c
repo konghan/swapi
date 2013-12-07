@@ -91,7 +91,7 @@ static swapi_swap_cbs_t		__gs_swap_clock_cbs = {
 	.on_resume		= clock_on_resume,
 };
 
-static inline swapi_swap_cbs_t *get_cbs(){
+static inline swapi_swap_cbs_t *get_clock_cbs(){
 	return &__gs_swap_clock_cbs;
 }
 
@@ -100,13 +100,13 @@ static inline swapi_swap_cbs_t *get_cbs(){
  */
 static int clock_on_timer(swapi_message_t *msg, void *data);
 
-static swapi_handler_entry_t	__gs_handler_entry[] = {
+static swapi_handler_entry_t	__gs_ch_entry[] = {
 	{.she_type = kSWAPI_MSGTYPE_TIMER, .she_cbfunc = clock_on_timer},
-	{.she_type = kSWAPI_MSGTYPE_DEFAULT},
+	{.she_type = kSWAPI_MSGTYPE_DEFAULT}
 };
 
 static inline swapi_handler_entry_t *get_handler(){
-	return __gs_handler_entry;
+	return __gs_ch_entry;
 }
 
 /*
@@ -162,6 +162,8 @@ static int clock_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	swapi_handler_entry_t	*she = get_handler();
 	swap_clock_t			*sc;
 	
+	swapi_log_info("clock swap on create!\n");
+
 	sc = (swap_clock_t *)swapi_swap_get(sw);
 	if(sc == NULL){
 		swapi_log_warn("swap clock not setting!\n");
@@ -221,6 +223,8 @@ static int clock_on_resume(swapi_swap_t *sw){
 
 	ASSERT(sw != NULL);
 
+	swapi_log_info("swap clock is resume!\n");
+
 	sc = (swap_clock_t *)swapi_swap_get(sw);
 	if(sc == NULL){
 		swapi_log_warn("swap clock not setting!\n");
@@ -239,7 +243,7 @@ int swap_clock_init(swapi_swap_t **swap){
 	sc = get_clock();
 
 	swapi_spin_init(&sc->sc_lock);
-	if(swapi_swap_create("clock", get_cbs(), &sc->sc_swap) != 0){
+	if(swapi_swap_create("clock", get_clock_cbs(), &sc->sc_swap) != 0){
 		swapi_log_warn("create swap clock fail!\n");
 		return -1;
 	}

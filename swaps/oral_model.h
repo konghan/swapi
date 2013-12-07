@@ -35,14 +35,14 @@ typedef struct oral_vmsg_item{
 }oral_vmsg_item_t;
 
 typedef struct oral_vmsg{
-	uuid_t					ov_uid;
+	swapi_uuid_t			ov_uid;
 
 	struct list_head		ov_node;	// link to user
 	struct list_head		ov_items;	// item container
 }oral_vmsg_t;
 
-int oral_vmsg_load(uuid_t *uid, oral_vmsg_t **ov);
-int oral_vmsg_save(uuid_t *uid, oral_vmsg_t *ov);
+int oral_vmsg_load(swapi_uuid_t *uid, oral_vmsg_t **ov);
+int oral_vmsg_save(swapi_uuid_t *uid, oral_vmsg_t *ov);
 
 int oral_vmsg_add(oral_vmsg_t *ov, oral_vmsg_item_t *ovi);
 int oral_vmsg_del(oral_vmsg_t *ov, oral_vmsg_item_t *ovi);

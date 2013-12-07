@@ -6,6 +6,8 @@
 #ifndef __SWAPI_TYPES_H__
 #define __SWAPI_TYPES_H__
 
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,6 +16,13 @@ extern "C" {
 #define NULL		((void *)0)
 #endif
 
+typedef struct swapi_uuid {
+	char su_uuid[16];
+}swapi_uuid_t;
+
+static inline int swapi_uuid_cmp(swapi_uuid_t *u1, swapi_uuid_t *u2){
+	return memcmp(u1, u2, sizeof(*u1));
+}
 
 #ifdef __cplusplus
 }

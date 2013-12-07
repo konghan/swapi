@@ -41,7 +41,7 @@ int swapi_canvas_draw_arc(swapi_canvas_t *cvs, float xc, float yc,
 int swapi_canvas_draw_rectangle(swapi_canvas_t *cvs, float x, float y, float width, float height);
 
 int swapi_canvas_draw_color(swapi_canvas_t *cvs, int r, int g, int b, int alpha);
-int swapi_canvas_draw_text(swapi_canvas_t *cvs, const char *text, int len,float x, float y);
+int swapi_canvas_draw_text(swapi_canvas_t *cvs, const char *text, int len, float x, float y);
 
 int swapi_canvas_draw_image(swapi_canvas_t *cvs, swapi_image_t *img, float x, float y);
 int swapi_canvas_draw_canvas(swapi_canvas_t *cvs, float x, float y, swapi_canvas_t *cvspaint);

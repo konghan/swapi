@@ -10,6 +10,7 @@
 
 struct swapi_handler{
 	swapi_spinlock_t	sh_lock;
+	
 	int					sh_slots;
 	struct list_head	sh_entries[];
 };
@@ -27,8 +28,8 @@ int swapi_handler_create(int slots, swapi_handler_t **sh){
 		swapi_log_warn("no more memory for handler\n");
 		return -ENOMEM;
 	}
-
 	memset(h, 0, len);
+
 	swapi_spin_init(&h->sh_lock);
 	h->sh_slots = slots;
 

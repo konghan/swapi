@@ -16,10 +16,14 @@
  * swap:oral data
  */
 typedef struct swap_oral {
-	swapi_spinlock_t	so_lock;
-	int					so_init;
+	int						so_init;
 
-	swapi_swap_t		*so_swap;
+	swapi_swap_t			*so_swap;
+
+	oral_view_user_t		so_user;
+	oral_view_vmsg_t		so_vmsg;
+	oral_view_text_t		so_text;
+	oral_view_rcrd_t		so_rcrd;
 
 }swap_oral_t;
 
@@ -45,7 +49,7 @@ static swapi_swap_cbs_t		__gs_swap_oral_cbs = {
 	.on_resume		= oral_on_resume,
 };
 
-static inline swapi_swap_cbs_t *get_cbs(){
+static inline swapi_swap_cbs_t *get_oral_cbs(){
 	return &__gs_swap_oral_cbs;
 }
 
@@ -54,44 +58,23 @@ static inline swapi_swap_cbs_t *get_cbs(){
  */
 static int oral_on_swapdata(swapi_message_t *msg, void *data);
 
-static swapi_handler_entry_t	__gs_handler_entry[] = {
+static swapi_handler_entry_t	__gs_oh_entry[] = {
 	{ .she_type = kSWAPI_MSGTYPE_SWAP_DATA, .she_cbfunc = oral_on_swapdata },
-	{ .she_type = kSWAPI_MSGTYPE_DEFAULT,   .she_cbfunc = NULL}
+	{ .she_type = kSWAPI_MSGTYPE_DEFAULT,   .she_cbfunc = NULL},
 };
 
 static inline swapi_handler_entry_t *get_handler(){
-	return __gs_handler_entry;
+	return __gs_oh_entry;
 }
 
 static int oral_on_swapdata(swapi_message_t *msg, void *data){
 	return 0;
 }
 
-static int oral_recording_draw(swapi_view_t *sv, oral_vmsg_t *ov){
-	return -1;
-}
-
-static int oral_message_draw(swapi_view_t *sv, const char *utf8, int len){
-	return -1;
-}
-
-static int oral_vmsg_draw(swapi_view_t *sv, oral_vmsg_t *ov){
-	return -1;
-}
-
-static int oral_user_draw(swapi_view_t *sv, oral_user_t *ou){
-	swapi_canvas_t *cvs;
-
-	ASSERT(sv != NULL);
-
-	cvs = 
-}
-
 static int oral_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	swapi_handler_entry_t	*she = get_handler();
 	swap_oral_t				*so  = get_oral();
 	swapi_window_t			*win;
-	swapi_view_t			*vw;
 
 	swapi_log_info("oral swap on create\n");
 
@@ -99,21 +82,25 @@ static int oral_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 		INIT_LIST_HEAD(&she->she_node);
 		she->she_data = so;
 		swapi_swap_add_handler(sw, she->she_type, she);
+
 		she++;
 	}
 
-	win = swapi_swap_top_window(sw);
+	win = swapi_swap_get_window(sw);
 	ASSERT(win != NULL);
 
-	vw = swapi_window_get_view(win);
-
-	oral_user_draw(vw, NULL);
+	oral_view_user_init(&so->so_user, win);
+	swapi_window_set_view(win, &so->so_user.ou_view);
 
 	return 0;
 }
 
 static int oral_on_destroy(swapi_swap_t *swa){
+	swap_oral_t				*so  = get_oral();
+	
 	swapi_log_info("oral swap on destroy\n");
+	oral_view_user_fini(&so->so_user);
+
 	return 0;
 }
 
@@ -131,54 +118,37 @@ int swap_oral_init(swapi_swap_t **swap){
 	swap_oral_t	*so;
 
 	ASSERT(swap != NULL);
+
+	swap_user_init();
 	
 	so = get_oral();
 
-	swapi_spin_init(&so->so_lock);
-	if(swapi_swap_create("oral", get_cbs(), &so->so_swap) != 0){
+	if(swapi_swap_create("oral", get_oral_cbs(), &so->so_swap) != 0){
 		swapi_log_warn("create oral swap fail!\n");
 		return -1;
 	}
 
 	so->so_init = 1;
 
+	swapi_swap_set(so->so_swap, so);
+
 	*swap = so->so_swap;
+
+	swapi_swap_kick(so->so_swap);
 
 	return 0;
 }
 
 int swap_oral_fini(){
 	swap_oral_t	*so;
+
+	swap_user_fini();
 	
 	so = get_oral();
 
-	swapi_spin_lock(&so->so_lock);
 	so->so_init = 0;
-	swapi_spin_unlock(&so->so_lock);
-
-	swapi_spin_fini(&so->so_lock);
 	swapi_swap_destroy(so->so_swap);
 
 	return 0;
 }
-
-
-/*
- * voice message data
- */
-typedef struct oral_data{
-	uuid_t			od_uid;
-	uint64_t		od_time;
-	int				od_idx;
-
-	int				od_size;
-	char			od_data[];
-}oral_data_t;
-
-static int oral_data_init(){
-}
-
-static int oral_data_fini(){
-}
-
 

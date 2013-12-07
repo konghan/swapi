@@ -10,30 +10,10 @@
 #include "swapi_sys_cache.h"
 #include "swapi_sys_thread.h"
 
-static int swapi_swap_on_swap(swapi_message_t *msg, void *data);
-static int swapi_swap_on_key(swapi_message_t *msg, void *data);
-static int swapi_swap_on_touch(swapi_message_t *msg, void *data);
-static int swapi_swap_on_draw(swapi_message_t *msg, void *data);
+static int swap_default_on_swap(swapi_message_t *msg, swapi_swap_t *swap){
 
-static swapi_handler_entry_t	__gs_handler_entry[] = {
-	{.she_type = kSWAPI_MSGTYPE_SWAP, .she_cbfunc = swapi_swap_on_swap},
-	{.she_type = kSWAPI_MSGTYPE_KEYBOARD, .she_cbfunc = swapi_swap_on_key},
-	{.she_type = kSWAPI_MSGTYPE_TOUCH, .she_cbfunc = swapi_swap_on_touch},
-	{.she_type = kSWAPI_MSGTYPE_DRAW, .she_cbfunc = swapi_swap_on_draw},
-	{.she_type = kSWAPI_MSGTYPE_DEFAULT, .she_cbfunc = NULL},
-};
+	ASSERT((msg != NULL) && (swap != NULL));
 
-static inline swapi_handler_entry_t *get_handler(){
-	return __gs_handler_entry;
-}
-
-static int swapi_swap_on_swap(swapi_message_t *msg, void *data){
-	swapi_swap_t	*swap = (swapi_swap_t *)data;
-
-	ASSERT(swap != NULL);
-
-	swapi_log_info("swap on swap message !\n");
-	
 	switch(msg->sm_size){
 		case kSWAP_MSGTYPE_CREATE:
 			swap->ss_cbs->on_create(swap, 0, NULL);
@@ -56,28 +36,28 @@ static int swapi_swap_on_swap(swapi_message_t *msg, void *data){
 	return 0;
 }
 
-static int swapi_swap_on_key(swapi_message_t *msg, void *data){
-	swapi_swap_t	*swap = (swapi_swap_t *)data;
-
-	ASSERT((msg != NULL) && (data != NULL));
+static int swap_default_on_key(swapi_message_t *msg, swapi_swap_t *swap){
+	
+	ASSERT((msg != NULL) && (swap != NULL));
 
 	swapi_window_invoke(&swap->ss_win, msg);
+
 	return 0;
 }
 
-static int swapi_swap_on_touch(swapi_message_t *msg, void *data){
-	swapi_swap_t	*swap = (swapi_swap_t *)data;
-
-	ASSERT((msg != NULL) && (data != NULL));
+static int swap_default_on_touch(swapi_message_t *msg, swapi_swap_t	*swap){
+	
+	ASSERT((msg != NULL) && (swap != NULL));
 	
 	swapi_window_invoke(&swap->ss_win, msg);
 	return 0;
 }
 
-static int swapi_swap_on_draw(swapi_message_t *msg, void *data){
-	swapi_swap_t	*swap = (swapi_swap_t *)data;
+static int swap_default_on_draw(swapi_message_t *msg, swapi_swap_t *swap){
+	
+	ASSERT((msg != NULL) && (swap != NULL));
 
-	ASSERT((msg != NULL) && (data != NULL));
+	swapi_log_info("swap %s is on drawing...\n", swap->ss_name);
 	
 	swapi_window_invoke(&swap->ss_win, msg);
 	return 0;
@@ -99,7 +79,28 @@ static int swapi_swap_thread_routine(void *p){
 			break;
 		}
 
-		swapi_handler_invoke(ss->ss_handler, &msg);
+		swapi_log_info("swap %s handle message %d\n", ss->ss_name, msg.sm_type);
+		
+		switch(msg.sm_type){
+		case kSWAPI_MSGTYPE_SWAP:
+			swap_default_on_swap(&msg, ss);
+			break;
+
+		case kSWAPI_MSGTYPE_KEYBOARD:
+			swap_default_on_key(&msg, ss);
+			break;
+
+		case kSWAPI_MSGTYPE_TOUCH:
+			swap_default_on_touch(&msg, ss);
+			break;
+
+		case kSWAPI_MSGTYPE_DRAW:
+			swap_default_on_draw(&msg, ss);
+			break;
+
+		default:
+			swapi_handler_invoke(ss->ss_handler, &msg);
+		}
 	}
 
 	ss->ss_cbs->on_destroy(ss);
@@ -123,7 +124,6 @@ int swapi_swap_kick(swapi_swap_t *swap){
 
 int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **swap){
 	swapi_swap_t			*ss;
-	swapi_handler_entry_t	*she;
 	natv_surface_info_t		nsi;
 
 	ASSERT(swap != NULL);
@@ -170,17 +170,6 @@ int swapi_swap_create(const char *name, swapi_swap_cbs_t *cbs, swapi_swap_t **sw
 		goto exit_window;
 	}
 
-	// add default handler
-	she = get_handler();
-	while(she->she_type != kSWAPI_MSGTYPE_DEFAULT){
-		INIT_LIST_HEAD(&she->she_node);
-		she->she_data = ss;
-
-		swapi_handler_add(ss->ss_handler, she->she_type, she);
-
-		she++;
-	}
-
 	// swap in lifecycle
 	swapi_swap_status_change(ss, kSWAP_MSGTYPE_CREATE);
 
@@ -223,8 +212,7 @@ int swapi_swap_destroy(swapi_swap_t *ss){
 }
 
 int swapi_swap_post(swapi_swap_t *ss, swapi_message_t *msg){
-	ASSERT(ss != NULL);
-	ASSERT(msg != NULL);
+	ASSERT((ss != NULL) && (msg != NULL));
 
 	return swapi_queue_post(ss->ss_queue, msg);
 }

@@ -16,6 +16,7 @@
 #include "list.h"
 
 #include "swap_clock.h"
+#include "swap_oral.h"
 
 typedef struct swapi_loop{
 	swapi_spinlock_t	sl_lock;
@@ -26,9 +27,7 @@ typedef struct swapi_loop{
 	struct list_head	sl_swaps;
 
 	swapi_swap_t		*sl_clock;	// default clock
-	swapi_swap_t		*sl_launch;	// swap launch
-	swapi_swap_t		*sl_shell;	// shell bar, not in sl_swaps
-	swapi_swap_t		*sl_vmsgr;	// voice messager app
+	swapi_swap_t		*sl_oral;	// voice messager app
 	swapi_swap_t		*sl_srvs;	// services:gps ..., not in sl_swaps
 
 	swapi_handler_t		*sl_handler;
@@ -78,10 +77,12 @@ static int swapi_loop_on_timer(swapi_message_t *msg, void *data){
 	swapi_loop_t	*sl = get_loop();
 	swapi_swap_t	*swap;
 
+	swapi_spin_lock(&sl->sl_lock);
 	list_for_each_entry(swap, &sl->sl_swaps, ss_node){
 		swapi_log_info("post message %d to %s\n", msg->sm_type, swap->ss_name);
 		swapi_swap_post(swap, msg);
 	}
+	swapi_spin_unlock(&sl->sl_lock);
 	
 	return 0;
 }
@@ -151,29 +152,50 @@ int swapi_loop_module_init(){
 	}
 	swapi_loop_add_swap(sl->sl_clock);
 
+	if(swap_oral_init(&sl->sl_oral) != 0){
+		swapi_log_warn("swap oral init fail\n");
+		goto exit_oral;
+	}
+	swapi_loop_add_swap(sl->sl_oral);
+
 	sl->sl_init = 1;
 
 	return 0;
 	
-exit_queue:
-	swapi_spin_fini(&sl->sl_lock);
+exit_oral:
+	swap_clock_fini(sl->sl_clock);
+
+exit_clock:
+	swapi_handler_destroy(sl->sl_handler);
 
 exit_handler:
 	swapi_queue_destroy(sl->sl_queue);
 
-exit_clock:
-	swapi_handler_destroy(sl->sl_handler);
+exit_queue:
+	swapi_spin_fini(&sl->sl_lock);
 
 	return -1;
 }
 
 
 static int swapi_loop_setcur(swapi_loop_t *sl, swapi_swap_t *swap){
-	
+	swapi_message_t		msg;
+
 	// post on_resume message to swap
 	// FIXME: draw top swap
-	sl->sl_cur = swap;
+	if(sl->sl_cur != NULL){
+		swapi_swap_status_change(sl->sl_cur, kSWAP_MSGTYPE_PAUSE);
+	}
 
+	swapi_log_info("change top swap to %s \n", swap->ss_name);
+
+	sl->sl_cur = swap;
+	swapi_swap_status_change(swap, kSWAP_MSGTYPE_RESUME);
+		
+	msg.sm_type = kSWAPI_MSGTYPE_DRAW;
+	msg.sm_size = 0;
+	swapi_swap_post(swap, &msg);
+	
 	return -1;
 }
 
@@ -186,10 +208,6 @@ int swapi_loop_add_swap(swapi_swap_t *swap){
 
 	list_add(&swap->ss_node, &sl->sl_swaps);
 	
-	// post on_create message to swap
-	
-	// post on_start message to swap
-
 	swapi_loop_setcur(sl, swap);
 
 	swapi_spin_unlock(&sl->sl_lock);
@@ -221,11 +239,6 @@ int swapi_loop_post(swapi_message_t *msg){
 int swapi_loop_run(void *p){
 	swapi_loop_t	*sl = get_loop();
 	swapi_message_t	msg;
-	
-	msg.sm_type = kSWAPI_MSGTYPE_TIMER;
-	msg.sm_size = 0;
-	msg.sm_data = 0;
-	swapi_queue_post(sl->sl_queue, &msg);
 
 	while(1){
 		if(swapi_queue_wait(sl->sl_queue, &msg) != 0){

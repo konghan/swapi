@@ -24,7 +24,9 @@ typedef int (*swapi_handler_func)(swapi_message_t *msg, void *data);
 
 typedef struct swapi_handler_entry{
 	int						she_type;
+	
 	struct list_head		she_node;
+	
 	swapi_handler_func		she_cbfunc;
 	void					*she_data;
 }swapi_handler_entry_t;
