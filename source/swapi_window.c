@@ -36,9 +36,7 @@ int swapi_window_fini(swapi_window_t *win){
 	return 0;
 }
 
-void swapi_window_render(swapi_window_t *win){
-	ASSERT(win != NULL);
-
+void swapi_window_render(){
 	natv_surface_render();
 }
 
@@ -49,6 +47,8 @@ int swapi_window_draw(swapi_window_t *win){
 	if(win->sw_focus != NULL){
 		swapi_view_draw(win->sw_focus);
 	}
+
+	swapi_window_render();
 
 	return 0;
 }
@@ -81,6 +81,10 @@ int swapi_window_invoke(swapi_window_t *win, swapi_message_t *msg){
 
 		case kNATV_KEY_MULTIPLE:
 			ret = sw->on_key_multiple(sw, kcode);
+			break;
+
+		case kNATV_KEY_CLICK:
+			ret = sw->on_key_click(sw, kcode);
 			break;
 
 		default:

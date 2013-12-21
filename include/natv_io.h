@@ -22,6 +22,8 @@ typedef struct natv_io natv_io_t;
 struct natv_file;
 typedef struct natv_file natv_file_t;
 
+int natv_io_rm(const char *fname);
+
 int natv_io_open(const char *swap, natv_io_t **fio);
 int natv_io_close(natv_io_t *fio);
 

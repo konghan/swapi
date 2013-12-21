@@ -158,6 +158,32 @@ static void clock_set_view(swap_clock_t *sc, int vtype){
 	clock_draw(sc);
 }
 
+int clock_on_key_click(struct swapi_view *sv, int key){
+	swap_clock_t *sc =  get_clock();
+
+	ASSERT(sv != NULL);	
+
+	switch(key){
+	case kNATV_KEYDRV_ENTER:
+	case kNATV_KEYDRV_ESCAPE:
+		break;
+		
+	case kNATV_KEYDRV_DOWN:
+	case kNATV_KEYDRV_UP:
+		if(sc->sc_vtype == kCLOCK_VIEW_ANALOG){
+			clock_set_view(sc, kCLOCK_VIEW_DIGITAL);
+		}else{
+			clock_set_view(sc, kCLOCK_VIEW_ANALOG);
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 static int clock_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	swapi_handler_entry_t	*she = get_handler();
 	swap_clock_t			*sc;
@@ -190,6 +216,7 @@ static int clock_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	}
 
 	sc->sc_cdv.on_draw = clock_digital_view_draw;
+	sc->sc_cdv.on_key_click = clock_on_key_click;
 
 	clock_set_view(sc, kCLOCK_VIEW_DIGITAL);
 
@@ -294,6 +321,7 @@ static int clock_analog_view_init(clock_analog_view_t *cav, swapi_window_t *win)
 	}
 
 	cav->cav_view.on_draw = clock_analog_view_draw;
+	cav->cav_view.on_key_click = clock_on_key_click;
 
 	if(swapi_canvas_init_image(&cav->cav_cvs, swapi_window_get_width(win),
 				swapi_window_get_height(win), swapi_window_get_format(win)) != 0){
@@ -534,6 +562,8 @@ static void clock_digital_view_draw(swapi_view_t *sv, swapi_canvas_t *cvs){
 	char			buf[32];
 	
 	ASSERT((sv != NULL) && (cvs != NULL));
+
+	swapi_log_info("clock digital is drawing\n");
 
 	// draw background
 	swapi_canvas_draw_color(cvs, 100, 100, 100, 255);

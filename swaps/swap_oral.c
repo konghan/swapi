@@ -90,6 +90,10 @@ static int oral_on_create(swapi_swap_t *sw, int argc, char *argv[]){
 	ASSERT(win != NULL);
 
 	oral_view_user_init(&so->so_user, win);
+	oral_view_vmsg_init(&so->so_vmsg, win);
+	oral_view_text_init(&so->so_text, win);
+//	oral_view_rcdr_init(&so->so_rcdr, win);
+
 	swapi_window_set_view(win, &so->so_user.ou_view);
 
 	return 0;
@@ -114,12 +118,60 @@ static int oral_on_resume(swapi_swap_t *swa){
 	return 0;
 }
 
+int oral_view_vmsg_set(swapi_uuid_t *uid){
+	swap_oral_t *so = get_oral();
+	
+	oral_vmsg_clear(&so->so_vmsg.ov_ctrl);
+
+	swapi_uuid_cpy(&so->so_vmsg.ov_ctrl.ovc_uid, uid);
+	
+	oral_vmsg_load(&so->so_vmsg.ov_ctrl);
+
+	return 0;
+}
+
+int oral_view_text_set(oral_vmsg_t *ov){
+	swap_oral_t *so = get_oral();
+
+	so->so_text.ot_vmsg = ov;
+
+	return 0;
+}
+
+int oral_view_switch(int vid){
+	swap_oral_t		*so = get_oral();
+	swapi_window_t	*win = swapi_swap_get_window(so->so_swap);
+
+	switch(vid){
+	case kORAL_VIEW_USER:
+		swapi_window_set_view(win, &so->so_user.ou_view);
+		break;
+
+	case kORAL_VIEW_VMSG:
+		swapi_window_set_view(win, &so->so_vmsg.ov_view);
+		break;
+
+	case kORAL_VIEW_TEXT:
+		swapi_window_set_view(win, &so->so_text.ot_view);
+		break;
+
+	case kORAL_VIEW_RCRD:
+		swapi_window_set_view(win, &so->so_rcrd.or_view);
+		break;
+
+	default:
+		return -1;
+	}
+
+	return 0;
+}
+
 int swap_oral_init(swapi_swap_t **swap){
 	swap_oral_t	*so;
 
 	ASSERT(swap != NULL);
 
-	swap_user_init();
+	oral_model_init();
 	
 	so = get_oral();
 
@@ -142,7 +194,7 @@ int swap_oral_init(swapi_swap_t **swap){
 int swap_oral_fini(){
 	swap_oral_t	*so;
 
-	swap_user_fini();
+	oral_model_fini();
 	
 	so = get_oral();
 

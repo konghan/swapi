@@ -24,6 +24,11 @@ static inline int swapi_uuid_cmp(swapi_uuid_t *u1, swapi_uuid_t *u2){
 	return memcmp(u1, u2, sizeof(*u1));
 }
 
+static inline int swapi_uuid_cpy(swapi_uuid_t *dest, swapi_uuid_t *src){
+	memcpy(dest, src, sizeof(*src));
+	return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif

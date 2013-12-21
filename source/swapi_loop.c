@@ -68,8 +68,58 @@ static swapi_handler_entry_t *get_handlers(){
 	return __gs_handlers;
 }
 
+static int swapi_loop_setcur(swapi_loop_t *sl, swapi_swap_t *swap);
+
+static void swapi_loop_prev_swap(){
+	swapi_loop_t	*sl = get_loop();
+	swapi_swap_t	*swap = sl->sl_cur;
+
+	swapi_spin_lock(&sl->sl_lock);
+	if(swap->ss_node.prev == &sl->sl_swaps){
+		swap = list_last_entry(&sl->sl_swaps, swapi_swap_t, ss_node);
+	}else{
+		swap = list_last_entry(&swap->ss_node, swapi_swap_t, ss_node);
+	}
+
+	swapi_loop_setcur(sl, swap);
+	swapi_spin_unlock(&sl->sl_lock);
+}
+
+static void swapi_loop_next_swap(){
+	swapi_loop_t	*sl = get_loop();
+	swapi_swap_t	*swap = sl->sl_cur;
+
+	swapi_spin_lock(&sl->sl_lock);
+	if(swap->ss_node.next == &sl->sl_swaps){
+		swap = list_first_entry(&sl->sl_swaps, swapi_swap_t, ss_node);
+	}else{
+		swap = list_first_entry(&swap->ss_node, swapi_swap_t, ss_node);
+	}
+
+	swapi_loop_setcur(sl, swap);
+	swapi_spin_unlock(&sl->sl_lock);
+
+}
+
 static int swapi_loop_on_key(swapi_message_t *msg, void *data){
-//	switch(msg->mm_type
+	swapi_swap_t *swap = swapi_loop_topswap();
+	int		key, action;
+
+	swapi_key_unpack(msg, &key, &action);
+
+	switch(key){
+	case kNATV_KEYDRV_ENTERUP:
+		swapi_loop_prev_swap();
+		break;
+
+	case kNATV_KEYDRV_ENTERDOWN:
+		swapi_loop_next_swap();
+		break;
+
+	default:
+		swapi_swap_post(swap, msg);
+	}
+
 	return 0;
 }
 

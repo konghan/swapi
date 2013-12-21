@@ -15,6 +15,17 @@ extern "C" {
 
 #define kMATH_PI					3.1415926
 
+enum{
+//	SWAPI_TEXT_STYLE_MULTILINE		= 0x00000001,
+	SWAPI_TEXT_STYLE_ALIGN_LEFT		= 0x00000002,
+	SWAPI_TEXT_STYLE_ALIGN_RIGHT	= 0x00000004,
+//	SWAPI_TEXT_STYLE_ALIGN_TOP		= 0x00000008,
+//	SWAPI_TEXT_STYLE_ALIGN_BOTTOM	= 0x00000010,
+//	SWAPI_TEXT_STYLE_ALIGN_MIDDLE	= 0x00000020,
+	SWAPI_TEXT_STYLE_ALIGN_CENTER	= 0x00000040,
+//	SWAPI_TEXT_STYLE_ELLIPSIS       = 0x00010000,
+};
+
 typedef struct swapi_canvas{
 	int						sc_init;
 
@@ -42,6 +53,11 @@ int swapi_canvas_draw_rectangle(swapi_canvas_t *cvs, float x, float y, float wid
 
 int swapi_canvas_draw_color(swapi_canvas_t *cvs, int r, int g, int b, int alpha);
 int swapi_canvas_draw_text(swapi_canvas_t *cvs, const char *text, int len, float x, float y);
+
+int swapi_canvas_draw_text_line(swapi_canvas_t *cvs, const char *utf8, int len, float x, float y,
+		float width, float height, float mlr, float mtb, unsigned int style);
+int swapi_canvas_draw_text_rect(swapi_canvas_t *cvs, const char *utf8, int len, float x, float y,
+		float width, float height, float mlr, float mtb);
 
 int swapi_canvas_draw_image(swapi_canvas_t *cvs, swapi_image_t *img, float x, float y);
 int swapi_canvas_draw_canvas(swapi_canvas_t *cvs, float x, float y, swapi_canvas_t *cvspaint);

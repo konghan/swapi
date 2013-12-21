@@ -38,6 +38,10 @@ struct natv_file{
 	FILE	*nf_file;
 };
 
+int natv_io_rm(const char *fname){
+	return remove(fname);
+}
+
 int natv_io_open(const char *swap, natv_io_t **fio){
 	natv_io_t	*ni;
 

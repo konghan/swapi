@@ -61,6 +61,7 @@ enum swapi_keydrv_keycode{
 enum swapi_keydrv_msgtype{
 	kNATV_KEY_DOWN = 0,
 	kNATV_KEY_UP,
+	kNATV_KEY_CLICK,
 	kNATV_KEY_LONGPRESS,
 	kNATV_KEY_MULTIPLE
 };

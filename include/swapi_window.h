@@ -56,7 +56,7 @@ int swapi_window_invoke(swapi_window_t *win, swapi_message_t *msg);
 
 int swapi_window_draw(swapi_window_t *win);
 
-void swapi_window_render(swapi_window_t *win);
+void swapi_window_render();
 
 // used by swapi internally
 static inline cairo_surface_t *_window_get_surface(swapi_window_t *win){

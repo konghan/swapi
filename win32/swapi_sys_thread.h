@@ -121,6 +121,55 @@ static inline int swapi_spin_trylock(swapi_spinlock_t *lock){
 	return TryEnterCriticalSection(lock) ? 0 : -1;
 }
 
+typedef struct swapi_mutex{
+	HANDLE	sm_mutex;
+}swapi_mutex_t;
+static inline int swapi_mutex_init(swapi_mutex_t *sm){
+	sm->sm_mutex = CreateMutex(NULL, FALSE, NULL);
+	if(sm->sm_mutex == NULL)
+		return -1;
+
+	return 0;
+}
+
+static inline int swapi_mutex_fini(swapi_mutex_t *sm){
+	CloseHandle(sm->sm_mutex);
+	sm->sm_mutex = NULL;
+
+	return 0;
+}
+
+static inline int swapi_mutex_lock(swapi_mutex_t *sm){
+	DWORD	ret;
+	ret = WaitForSingleObject(sm->sm_mutex, INFINITE);
+	if(ret == WAIT_OBJECT_0){
+		return 0;
+	}
+
+	return -1;
+}
+
+static inline int swapi_mutex_unlock(swapi_mutex_t *sm){
+	return (ReleaseMutex(sm->sm_mutex) == FALSE) ? -1 : 0;
+}
+
+static inline int swapi_mutex_trylock(swapi_mutex_t *sm, int ms){
+	DWORD ret;
+
+	ret = WaitForSingleObject(sm->sm_mutex, ms);
+	switch(ret){
+	case WAIT_OBJECT_0:
+		return 0;
+
+	case WAIT_TIMEOUT:
+		return -2;
+
+	default:
+		return -1;
+	}
+}
+
+
 #if 0
 // use by edp_loop internally.
 static inline void __swapi_sleep(int second){

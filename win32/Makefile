@@ -4,8 +4,7 @@ AR = i686-pc-mingw32-ar
 
 CFLAGS = -Wall -g -O2 
 
-INCLUDES = \
-		   -I. -I../include -I../source -I../swaps
+INCLUDES = -I. -I../include -I../source -I../swaps -I../../emulator
 
 LDFLAGS = -L/usr/local/lib
 
@@ -23,7 +22,7 @@ win32-obj = swapi_sys_cache.o swapi_sys_logger.o						\
 			natv_time.o natv_io.o natv_cfgsrv.o							\
 			natv_hwdrv.o
 
-swap-obj = swap_clock.o swap_user.o oral_view.o swap_oral.o
+swap-obj = swap_clock.o oral_model.o oral_view.o swap_oral.o
 
 #swap_user.o swap_oral.o oral_view.o
 

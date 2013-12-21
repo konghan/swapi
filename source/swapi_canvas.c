@@ -243,4 +243,123 @@ int swapi_canvas_draw_text(swapi_canvas_t *cvs, const char *text, int len,float 
 	return 0;
 }
 
+int swapi_canvas_draw_text_line(swapi_canvas_t *cvs, const char *utf8, int len, float x, float y,
+		float width, float height, float mlr, float mtb, unsigned int style){
+	cairo_scaled_font_t		*scfont;
+	cairo_text_extents_t	ext;
+	cairo_glyph_t			*glyphs = NULL, *ge = NULL;
+	cairo_status_t			status;
+	float					nx = 0, ny = 0;
+	int						nums, ne;
+	int						i;
+
+	scfont = cairo_get_scaled_font(cvs->sc_cr);
+	if(scfont == NULL){
+		swapi_log_warn("get scaled font from cr fail\n");
+		return -1;
+	}
+
+	status = cairo_scaled_font_text_to_glyphs(scfont, x, y, utf8, len,
+			&glyphs, &nums, NULL, NULL, NULL);
+	if(status != CAIRO_STATUS_SUCCESS){
+		swapi_log_warn("text to glyph fail:%s\n", cairo_status_to_string(status));
+		return -1;
+	}
+	
+	cairo_scaled_font_text_to_glyphs(scfont, x, y, ".", 1, &ge, &ne, NULL, NULL, NULL);
+
+	cairo_scaled_font_glyph_extents(scfont, glyphs, nums, &ext);
+	if(ext.width > width)
+		ext.width = width;
+	
+	if(style & SWAPI_TEXT_STYLE_ALIGN_RIGHT){
+		nx = width - ext.width - mlr*2;
+		ny = mtb + ext.height;
+	}else if(style & SWAPI_TEXT_STYLE_ALIGN_CENTER){
+		nx = (width - ext.width - mlr*2)/2;
+		ny = (height - ext.height - mtb*2)/2 + ext.height;
+	}else{
+		nx = mlr;
+		ny = mtb + ext.height;
+	}
+
+	if(nx <= 0)
+		nx = mlr;
+
+	for(i = 0; i < nums; i++){
+		if(((glyphs[i]).x + nx) > (x + width)){
+			nums = i - 1;
+
+			if(nums >= 3){
+				(glyphs[nums-1]).index = ge->index;
+				(glyphs[nums-2]).index = ge->index;
+				(glyphs[nums-3]).index = ge->index;
+			}
+			break;
+		}
+
+		(glyphs[i]).x += nx;
+		(glyphs[i]).y = ny;
+	}
+
+	cairo_show_glyphs(cvs->sc_cr, glyphs, nums);
+
+	cairo_glyph_free(glyphs);
+	cairo_glyph_free(ge);
+
+	return 0;
+}
+
+int swapi_canvas_draw_text_rect(swapi_canvas_t *cvs, const char *utf8, int len, float x, float y,
+		float width, float height, float mlr, float mtb){
+	cairo_scaled_font_t		*scfont;
+	cairo_text_extents_t	ext;
+	cairo_glyph_t			*glyphs = NULL, *ge = NULL;
+	cairo_status_t			status;
+	int						nums, ne;
+	int						i, j;
+	float					ny = mtb, nx = 0;
+
+	scfont = cairo_get_scaled_font(cvs->sc_cr);
+	if(scfont == NULL){
+		swapi_log_warn("cairo without scaled font\n");
+		return -1;
+	}
+
+	status = cairo_scaled_font_text_to_glyphs(scfont, x+mlr, y+mtb, utf8, len,
+			&glyphs, &nums, NULL, NULL, NULL);
+	if(status != CAIRO_STATUS_SUCCESS){
+		swapi_log_warn("text to glyph fail:%s\n", cairo_status_to_string(status));
+		return -1;
+	}
+
+	cairo_scaled_font_text_to_glyphs(scfont, x, y, ".", 1, &ge, &ne, NULL, NULL, NULL);
+	cairo_scaled_font_glyph_extents(scfont, glyphs, nums, &ext);
+ 
+	width -= ext.width / nums;
+	if(width < 0)
+		width = 0;
+
+	// first line
+	nx = 0;
+	ny = ext.height;
+
+	for(i = 0, j = 1; i < nums; i++){
+		if(((glyphs[i]).x + mlr) >= (width + x + mlr)){
+			nx = (glyphs[i]).x - (glyphs[0]).x;
+			ny += j*ext.height + 2;
+			j++;
+		}
+
+		(glyphs[i]).x -= nx;
+		(glyphs[i]).y += ny;
+	}
+		
+	cairo_show_glyphs(cvs->sc_cr, glyphs, nums);
+	cairo_glyph_free(glyphs);
+	cairo_glyph_free(ge);
+
+	return 0;
+}
+
 
